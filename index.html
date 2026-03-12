@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathfinder AI — Pharma Career Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ef;
+  --bg2: #eceae4;
+  --surface: #ffffff;
+  --surface2: #f9f8f5;
+  --border: #e0ddd6;
+  --border2: #ccc9bf;
+  --ink: #1a1916;
+  --ink2: #4a4840;
+  --muted: #8a877e;
+  --teal: #0d7a6b;
+  --teal-light: #e6f4f1;
+  --teal-mid: #b2ddd7;
+  --amber: #c4660a;
+  --amber-light: #fef3e8;
+  --red: #c0392b;
+  --red-light: #fdecea;
+  --blue: #2563a8;
+  --blue-light: #eaf0fb;
+  --font-h: 'Bricolage Grotesque', sans-serif;
+  --font-b: 'Instrument Sans', sans-serif;
+  --radius: 14px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.6;min-height:100vh;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50;}
+.logo{font-family:var(--font-h);font-size:20px;font-weight:800;color:var(--teal);display:flex;align-items:center;gap:8px;}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);}
+.topnav{display:flex;gap:4px;}
+.topnav-item{padding:6px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink2);transition:all .15s;}
+.topnav-item:hover{background:var(--bg2);}
+.topnav-item.active{background:var(--teal-light);color:var(--teal);font-weight:600;}
+.pill-badge{background:var(--teal);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.page{display:none;padding:40px;max-width:1100px;margin:0 auto;animation:fadeUp .3s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.section-header{margin-bottom:32px;}
+.section-eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal);margin-bottom:8px;}
+.section-title{font-family:var(--font-h);font-size:36px;font-weight:800;color:var(--ink);line-height:1.1;letter-spacing:-.5px;}
+.section-title em{font-style:normal;color:var(--teal);}
+.section-sub{font-size:16px;color:var(--muted);margin-top:10px;max-width:520px;}
+.flow-steps{display:flex;align-items:center;gap:0;margin-bottom:36px;}
+.flow-step{display:flex;align-items:center;gap:10px;}
+.flow-step-num{width:28px;height:28px;border-radius:50%;background:var(--bg2);color:var(--muted);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--border);flex-shrink:0;}
+.flow-step.done .flow-step-num{background:var(--teal);color:white;border-color:var(--teal);}
+.flow-step.active .flow-step-num{background:var(--ink);color:white;border-color:var(--ink);}
+.flow-step-label{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;}
+.flow-step.done .flow-step-label{color:var(--teal);}
+.flow-step.active .flow-step-label{color:var(--ink);}
+.flow-connector{flex:1;height:1px;background:var(--border);margin:0 12px;min-width:20px;}
+.flow-connector.done{background:var(--teal-mid);}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px;}
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);position:relative;overflow:hidden;}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--teal);background:var(--teal-light);}
+.upload-zone.has-file{border-color:var(--teal);border-style:solid;background:var(--teal-light);}
+.upload-icon{font-size:36px;margin-bottom:12px;}
+.upload-title{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.upload-sub{font-size:13px;color:var(--muted);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.panel-title{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--ink);}
+.panel-body{padding:16px;}
+.tab-toggle{display:flex;background:var(--bg2);border-radius:8px;padding:3px;gap:2px;}
+.tab-btn{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted);border:none;background:none;font-family:var(--font-b);}
+.tab-btn.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.job-search{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font-b);font-size:13px;outline:none;background:var(--bg);color:var(--ink);margin-bottom:10px;}
+.job-search:focus{border-color:var(--teal);}
+.job-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+.job-item{padding:12px 14px;border-radius:9px;cursor:pointer;border:1px solid transparent;transition:all .15s;background:var(--surface2);}
+.job-item:hover{border-color:var(--teal-mid);background:var(--teal-light);}
+.job-item.selected{border-color:var(--teal);background:var(--teal-light);}
+.job-item-title{font-size:13px;font-weight:600;color:var(--ink);}
+.job-item-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.job-item-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.jtag{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--bg2);color:var(--ink2);}
+.jd-paste{width:100%;min-height:200px;padding:12px;border:1px solid var(--border);border-radius:9px;font-family:var(--font-b);font-size:13px;line-height:1.6;color:var(--ink);background:var(--bg);outline:none;resize:vertical;}
+.jd-paste:focus{border-color:var(--teal);}
+.action-bar{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);}
+.action-status{font-size:13px;color:var(--muted);}
+.action-status strong{color:var(--ink);}
+.btn{padding:11px 28px;border-radius:10px;border:none;font-family:var(--font-b);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
+.btn-primary{background:var(--teal);color:white;}
+.btn-primary:hover:not(:disabled){background:#0a6659;transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,122,107,.3);}
+.btn-primary:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--bg2);}
+.btn-sm{padding:7px 16px;font-size:12px;}
+.analyzing-overlay{position:fixed;inset:0;background:rgba(245,243,239,.95);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px);}
+.analyzing-overlay.show{opacity:1;pointer-events:all;}
+.analyzing-logo{font-family:var(--font-h);font-size:32px;font-weight:800;color:var(--teal);}
+.analyzing-steps{display:flex;flex-direction:column;gap:10px;width:380px;}
+.astep{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;background:var(--surface);border:1px solid var(--border);font-size:13px;color:var(--muted);transition:all .4s;}
+.astep.active{color:var(--ink);border-color:var(--teal-mid);background:var(--teal-light);}
+.astep.done{color:var(--teal);border-color:var(--teal-mid);}
+.astep-dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.astep.active .astep-dot{animation:dot-pulse 1s infinite;}
+@keyframes dot-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+.dash-hero{background:var(--ink);border-radius:20px;padding:32px 36px;margin-bottom:28px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;position:relative;overflow:hidden;}
+.dash-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(13,122,107,.3) 0%,transparent 70%);}
+.dash-hero-title{font-family:var(--font-h);font-size:28px;font-weight:800;color:white;margin-bottom:8px;line-height:1.2;}
+.dash-hero-title em{font-style:normal;color:#4ecdb4;}
+.dash-hero-sub{font-size:14px;color:rgba(255,255,255,.6);}
+.dash-hero-stats{display:flex;gap:28px;}
+.hero-stat{text-align:center;}
+.hero-stat-val{font-family:var(--font-h);font-size:28px;font-weight:800;color:white;}
+.hero-stat-val.green{color:#4ecdb4;}
+.hero-stat-val.amber{color:#f5a54a;}
+.hero-stat-label{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;}
+.dash-grid{display:grid;grid-template-columns:280px 1fr;gap:24px;margin-bottom:28px;}
+.dash-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.card-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-head-title{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--ink);}
+.card-body{padding:20px;}
+.sg-item{margin-bottom:14px;}
+.sg-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.sg-name{font-size:13px;color:var(--ink);font-weight:500;}
+.sg-pct{font-size:11px;color:var(--muted);}
+.sg-track{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+.sg-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.sg-fill.low{background:var(--red);}
+.sg-fill.mid{background:var(--amber);}
+.sg-fill.high{background:var(--teal);}
+.timeline{position:relative;}
+.tl-line{position:absolute;left:17px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-item{position:relative;padding-left:44px;padding-bottom:28px;}
+.tl-item:last-child{padding-bottom:0;}
+.tl-dot{position:absolute;left:10px;top:3px;width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:var(--bg);z-index:1;transition:all .2s;}
+.tl-item.done .tl-dot{background:var(--teal);border-color:var(--teal);}
+.tl-item.active .tl-dot{background:var(--ink);border-color:var(--ink);box-shadow:0 0 0 4px rgba(26,25,22,.1);}
+.tl-item.locked .tl-dot{background:var(--bg2);}
+.tl-period{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px;}
+.tl-title{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.tl-item.locked .tl-title{color:var(--muted);}
+.tl-desc{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.5;}
+.tl-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.tl-tag{padding:3px 10px;border-radius:5px;font-size:11px;font-weight:600;background:var(--bg2);color:var(--ink2);border:1px solid var(--border);}
+.tl-tag.done{background:var(--teal-light);color:var(--teal);border-color:var(--teal-mid);}
+.tl-tag.active{background:var(--blue-light);color:var(--blue);border-color:#bdd4f5;}
+.tl-tag.locked{color:var(--muted);font-style:italic;}
+.task-section{margin-bottom:20px;}
+.task-week{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.task-week::after{content:'';flex:1;height:1px;background:var(--border);}
+.task-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:9px;margin-bottom:7px;cursor:pointer;background:var(--surface2);border:1px solid transparent;transition:all .15s;}
+.task-row:hover{border-color:var(--teal-mid);}
+.task-row.checked{opacity:.55;}
+.task-cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .15s;}
+.task-row.checked .task-cb{background:var(--teal);border-color:var(--teal);color:white;}
+.task-row.checked .task-text{text-decoration:line-through;color:var(--muted);}
+.task-text{flex:1;font-size:13px;color:var(--ink);}
+.task-meta-sm{font-size:11px;color:var(--muted);}
+.task-type-badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;flex-shrink:0;}
+.tb-apply{background:var(--amber-light);color:var(--amber);}
+.tb-learn{background:var(--blue-light);color:var(--blue);}
+.tb-build{background:var(--teal-light);color:var(--teal);}
+.tb-network{background:#f3e8ff;color:#7c3aed;}
+.letter-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;font-size:13px;line-height:1.8;color:var(--ink2);white-space:pre-wrap;max-height:320px;overflow-y:auto;font-family:var(--font-b);}
+.typing-cursor{display:inline-block;width:2px;height:13px;background:var(--teal);margin-left:1px;vertical-align:middle;animation:blink .8s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.toast{position:fixed;bottom:28px;right:28px;z-index:300;background:var(--ink);color:white;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;transform:translateY(60px);opacity:0;transition:all .3s;box-shadow:var(--shadow-lg);}
+.toast.show{transform:translateY(0);opacity:1;}
+.empty-state{text-align:center;padding:60px 40px;}
+.empty-icon{font-size:52px;margin-bottom:16px;}
+.empty-title{font-family:var(--font-h);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.empty-sub{color:var(--muted);font-size:14px;margin-bottom:24px;}
+.jobs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.job-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all .15s;cursor:pointer;}
+.job-card:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:var(--shadow);}
+.job-card-company{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:6px;}
+.job-card-title{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;line-height:1.3;}
+.job-card-loc{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.job-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.job-card-tag{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--bg2);color:var(--ink2);}
+.job-card-tag.required{background:var(--red-light);color:var(--red);}
+.job-card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;margin-top:4px;}
+.job-card-type{font-size:11px;color:var(--muted);}
+.job-card-btn{font-size:12px;font-weight:600;color:var(--teal);cursor:pointer;}
+.job-card-btn:hover{text-decoration:underline;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+@media(max-width:768px){
+  .topbar{padding:0 16px;}
+  .page{padding:20px 16px;}
+  .upload-grid,.dash-grid,.jobs-grid{grid-template-columns:1fr;}
+  .dash-grid-3{grid-template-columns:1fr;}
+  .dash-hero{grid-template-columns:1fr;}
+  .dash-hero-stats{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="analyzing-overlay" id="analyzingOverlay">
+  <div class="analyzing-logo">⬡ Pathfinder AI</div>
+  <div style="font-size:15px;color:var(--ink2);margin-top:-12px">Analyzing your profile against the job requirements...</div>
+  <div class="analyzing-steps">
+    <div class="astep" id="as1"><div class="astep-dot"></div>Extracting skills &amp; experience from CV</div>
+    <div class="astep" id="as2"><div class="astep-dot"></div>Parsing job requirements &amp; must-haves</div>
+    <div class="astep" id="as3"><div class="astep-dot"></div>Computing skill gap score</div>
+    <div class="astep" id="as4"><div class="astep-dot"></div>Generating 2-year milestone roadmap</div>
+    <div class="astep" id="as5"><div class="astep-dot"></div>Building 30-day action plan</div>
+    <div class="astep" id="as6"><div class="astep-dot"></div>Drafting cover letter</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Done!</span></div>
+
+<header class="topbar">
+  <div class="logo"><div class="logo-dot"></div>Pathfinder AI</div>
+  <nav class="topnav">
+    <div class="topnav-item active" onclick="showPage('upload',this)">New Analysis</div>
+    <div class="topnav-item" onclick="showPage('dashboard',this)">My Roadmap</div>
+    <div class="topnav-item" onclick="showPage('jobs',this)">Job Database</div>
+  </nav>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="pill-badge" id="topBadge" style="display:none">Pharma</span>
+    <span style="font-size:13px;color:var(--muted)">MVP · No login</span>
+  </div>
+</header>
+
+<!-- UPLOAD PAGE -->
+<div class="page active" id="page-upload">
+  <div class="section-header">
+    <div class="section-eyebrow">Step 1 of 2</div>
+    <div class="section-title">Upload CV &amp; <em>Select a Job</em></div>
+    <div class="section-sub">We'll analyze the gap between your current profile and the pharma role — then generate a full career roadmap, powered by AI.</div>
+  </div>
+
+  <div class="flow-steps">
+    <div class="flow-step active" id="fstep1"><div class="flow-step-num">1</div><div class="flow-step-label">Upload CV</div></div>
+    <div class="flow-connector" id="fcon1"></div>
+    <div class="flow-step" id="fstep2"><div class="flow-step-num">2</div><div class="flow-step-label">Select Job</div></div>
+    <div class="flow-connector" id="fcon2"></div>
+    <div class="flow-step" id="fstep3"><div class="flow-step-num">3</div><div class="flow-step-label">AI Analysis</div></div>
+  </div>
+
+  <div class="upload-grid">
+    <div>
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Your CV / Resume</div>
+      <div class="upload-zone" id="cvZone" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+        <input type="file" id="cvFile" accept=".pdf,.txt,.doc,.docx" onchange="handleFileSelect(event)">
+        <div class="upload-icon" id="cvIcon">📄</div>
+        <div class="upload-title" id="cvTitle">Drop your CV here</div>
+        <div class="upload-sub">PDF, DOC, TXT · or click to browse</div>
+      </div>
+      <div style="margin-top:16px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">Or paste CV text directly</div>
+        <textarea id="cvText" placeholder="Paste your CV / resume text here..." style="width:100%;min-height:130px;padding:12px;border:1px solid var(--border);border-radius:10px;font-family:var(--font-b);font-size:13px;line-height:1.6;color:var(--ink);background:var(--surface);outline:none;resize:vertical;" oninput="checkReady()"></textarea>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Target Job</div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Choose a position</div>
+          <div class="tab-toggle">
+            <button class="tab-btn active" id="tbDB" onclick="switchJobTab('db')">From Database</button>
+            <button class="tab-btn" id="tbPaste" onclick="switchJobTab('paste')">Paste JD</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="jobDBPanel">
+            <input class="job-search" type="text" placeholder="Search pharma roles..." oninput="filterJobs(this.value)">
+            <div class="job-list" id="jobList"></div>
+          </div>
+          <div id="jobPastePanel" style="display:none">
+            <textarea class="jd-paste" id="jdPaste" placeholder="Paste the full job description here..." oninput="checkReady()"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar">
+    <div class="action-status" id="actionStatus">Upload or paste your CV to start</div>
+    <button class="btn btn-primary" id="analyzeBtn" disabled onclick="runAnalysis()">⬡ Analyze with AI</button>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="page-dashboard">
+  <div id="dashEmpty" class="empty-state">
+    <div class="empty-icon">🗺️</div>
+    <div class="empty-title">No roadmap yet</div>
+    <div class="empty-sub">Upload your CV and select a pharma job to generate your personalized career roadmap.</div>
+    <button class="btn btn-primary" onclick="showPage('upload',document.querySelector('.topnav-item'))">Start Analysis →</button>
+  </div>
+  <div id="dashContent" style="display:none">
+    <div class="dash-hero">
+      <div>
+        <div class="dash-hero-title" id="heroTitle">Your Roadmap to <em>...</em></div>
+        <div class="dash-hero-sub" id="heroSub">AI-generated · 2-year horizon · Personalized to your CV</div>
+      </div>
+      <div class="dash-hero-stats">
+        <div class="hero-stat"><div class="hero-stat-val green" id="matchPct">—</div><div class="hero-stat-label">Match Score</div></div>
+        <div class="hero-stat"><div class="hero-stat-val amber" id="gapPct">—</div><div class="hero-stat-label">Skill Gap</div></div>
+        <div class="hero-stat"><div class="hero-stat-val" id="milestoneCount">—</div><div class="hero-stat-label">Milestones</div></div>
+      </div>
+    </div>
+    <div class="dash-grid">
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-head"><div class="card-head-title">📊 Skill Gap Analysis</div></div>
+          <div class="card-body" id="skillGapBody"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-head-title">✅ Your Strengths</div></div>
+          <div class="card-body" id="strengthsBody"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-head-title">🗺️ 2-Year Roadmap</div></div>
+        <div class="card-body">
+          <div class="timeline"><div class="tl-line"></div><div id="timelineBody"></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-head-title">⚡ 30-Day Action Plan</div>
+          <button class="btn btn-ghost btn-sm" onclick="showToast('Plan exported!')">Export</button>
+        </div>
+        <div class="card-body" id="planBody"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-head-title">✍️ Cover Letter Draft</div>
+          <button class="btn btn-ghost btn-sm" onclick="copyCoverLetter()">Copy</button>
+        </div>
+        <div class="card-body"><div class="letter-box" id="letterBox"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JOBS PAGE -->
+<div class="page" id="page-jobs">
+  <div class="section-header">
+    <div class="section-eyebrow">Pharma Job Database</div>
+    <div class="section-title">Curated <em>Industry Roles</em></div>
+    <div class="section-sub">Hand-picked positions from leading pharmaceutical and biotech companies. Click any role to run an analysis.</div>
+  </div>
+  <div class="jobs-grid" id="jobsGrid"></div>
+</div>
+
+<script>
+const JOBS_DB = [
+  {id:1,company:"Novartis",title:"Clinical Data Scientist",location:"Basel, Switzerland (Hybrid)",type:"Full-time · Mid-level",required:["Python","R","SAS","Clinical Trials","FDA Regulations","Biostatistics"],nice:["ML","NLP","CDISC","Power BI"],description:`Role: Clinical Data Scientist at Novartis\n\nKey Responsibilities:\n- Design and implement statistical analysis plans for Phase II/III clinical trials\n- Develop Python/R pipelines for clinical data processing and reporting\n- Ensure compliance with FDA 21 CFR Part 11 and ICH E9 guidelines\n- Collaborate with cross-functional teams (clinical operations, medical affairs, regulatory)\n- Present findings to senior stakeholders\n\nMust Have:\n- MSc/PhD in Biostatistics, Data Science, or related field\n- 2+ years experience with clinical trial data\n- Proficiency in Python, R, and SAS\n- Knowledge of CDISC standards (SDTM/ADaM)\n- Solid understanding of GCP guidelines and FDA regulations\n\nNice to Have:\n- Machine learning experience applied to clinical data\n- Experience with NLP for adverse event detection\n- Power BI or Tableau for data visualization`},
+  {id:2,company:"Pfizer",title:"Regulatory Affairs Specialist",location:"New York, USA (On-site)",type:"Full-time · Junior–Mid",required:["Regulatory Strategy","CTD/eCTD","FDA","EMA","Drug Development"],nice:["Veeva Vault","ICH guidelines","Project Management"],description:`Role: Regulatory Affairs Specialist at Pfizer\n\nKey Responsibilities:\n- Prepare and submit regulatory dossiers (CTD/eCTD) to FDA, EMA, and other agencies\n- Develop regulatory strategies for NDA, BLA, and IND applications\n- Monitor global regulatory requirements and advise internal teams\n- Manage regulatory agency correspondence\n\nMust Have:\n- BSc/MSc in Pharmacy, Chemistry, Life Sciences, or related\n- 1-3 years in pharma regulatory affairs\n- Strong knowledge of FDA and EMA submission requirements\n- Experience preparing CTD/eCTD submissions\n- Understanding of drug development lifecycle\n\nNice to Have:\n- Veeva Vault Regulatory experience\n- Knowledge of post-approval submission procedures\n- PMP or RAC certification`},
+  {id:3,company:"Roche",title:"Computational Biologist",location:"Basel, Switzerland (Hybrid)",type:"Full-time · Senior",required:["Python","R","Bioinformatics","NGS","Genomics","Statistics"],nice:["Nextflow","AWS","Single-cell RNA-seq","PyTorch"],description:`Role: Computational Biologist at Roche Genentech\n\nKey Responsibilities:\n- Analyze large-scale genomic/transcriptomic datasets (NGS, scRNA-seq)\n- Develop bioinformatics pipelines for drug target discovery\n- Integrate multi-omics data to identify biomarkers\n- Collaborate with wet-lab scientists\n\nMust Have:\n- PhD in Computational Biology, Bioinformatics, or related\n- Expert-level Python and R\n- Deep experience with NGS data analysis\n- Strong statistical background\n- Publication record in peer-reviewed journals\n\nNice to Have:\n- Cloud computing (AWS, GCP)\n- Nextflow/Snakemake workflow management\n- Deep learning applied to biological data`},
+  {id:4,company:"AstraZeneca",title:"Pharmacovigilance Scientist",location:"Cambridge, UK (Hybrid)",type:"Full-time · Mid-level",required:["Pharmacovigilance","MedDRA","Signal Detection","ICH E2 Guidelines","Medical Writing"],nice:["ARISg","Empirica Signal","SQL"],description:`Role: Pharmacovigilance Scientist at AstraZeneca\n\nKey Responsibilities:\n- Perform signal detection and evaluation for marketed products\n- Author PBRERs and DSURs\n- Support expedited adverse event reporting\n- Liaise with health authorities on safety matters\n\nMust Have:\n- BSc/MSc in Pharmacy, Medicine, Nursing, or Life Sciences\n- 2+ years in pharmacovigilance or drug safety\n- Strong knowledge of MedDRA and ICH E2 guidelines\n- Medical writing skills for regulatory documents\n- Experience with signal detection methodologies\n\nNice to Have:\n- ARISg or Oracle Argus safety database experience\n- SQL for safety database queries\n- Previous regulatory authority interaction`},
+  {id:5,company:"Bayer",title:"Process Chemistry Scientist",location:"Berlin, Germany (On-site)",type:"Full-time · Mid-Senior",required:["Organic Chemistry","Synthesis","Scale-up","GMP","Analytical Chemistry","HPLC"],nice:["DoE","PAT","Continuous Manufacturing","Python"],description:`Role: Process Chemistry Scientist at Bayer AG\n\nKey Responsibilities:\n- Develop and optimize synthetic routes for API manufacturing\n- Scale up reactions from lab to pilot plant under GMP conditions\n- Perform analytical characterization (HPLC, NMR, MS)\n- Collaborate with engineering teams for technology transfer\n\nMust Have:\n- PhD in Organic/Process Chemistry\n- 3+ years experience in process chemistry\n- Practical expertise in organic synthesis and reaction optimization\n- GMP manufacturing knowledge\n- Proficiency with HPLC and analytical techniques\n\nNice to Have:\n- Design of Experiments (DoE) methodology\n- Process Analytical Technology (PAT) tools\n- Continuous flow chemistry experience`},
+  {id:6,company:"J&J",title:"Medical Science Liaison",location:"Remote (Europe)",type:"Full-time · Senior",required:["Clinical Expertise","KOL Management","Medical Affairs","Presentations","Oncology"],nice:["Publication Planning","HEOR","Digital Engagement"],description:`Role: Medical Science Liaison (Oncology) at J&J\n\nKey Responsibilities:\n- Build and maintain scientific relationships with KOLs in oncology\n- Provide medical education and scientific exchange\n- Support clinical trial site identification and enrollment\n- Communicate real-world evidence to HCPs\n\nMust Have:\n- MD, PharmD, or PhD in a relevant field\n- 2+ years as an MSL or field medical experience\n- Strong oncology therapeutic area knowledge\n- Exceptional scientific presentation skills\n- Experience with KOL mapping and engagement\n\nNice to Have:\n- Health Economics and Outcomes Research (HEOR)\n- Publication planning experience\n- Digital/remote engagement capabilities`}
+];
+
+const S = {cvText:'',selectedJob:null,jobTab:'db',roadmap:null,coverLetterText:''};
+
+document.addEventListener('DOMContentLoaded',()=>{renderJobList(JOBS_DB);renderJobsGrid();loadSaved();});
+
+function loadSaved(){
+  try{const s=sessionStorage.getItem('pf_roadmap');if(s){S.roadmap=JSON.parse(s);renderDashboard(S.roadmap);}}catch(e){}
+}
+
+function showPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.topnav-item').forEach(n=>n.classList.remove('active'));
+  if(el&&el.classList)el.classList.add('active');
+}
+
+function dragOver(e){e.preventDefault();document.getElementById('cvZone').classList.add('dragover');}
+function dragLeave(e){document.getElementById('cvZone').classList.remove('dragover');}
+function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processFile(f);}
+function handleFileSelect(e){const f=e.target.files[0];if(f)processFile(f);}
+function processFile(f){
+  document.getElementById('cvZone').classList.add('has-file');
+  document.getElementById('cvIcon').textContent='✅';
+  document.getElementById('cvTitle').textContent=f.name;
+  const r=new FileReader();
+  r.onload=e=>{S.cvText=e.target.result;document.getElementById('cvText').value=S.cvText.substring(0,3000);updateStep(1,true);checkReady();};
+  r.readAsText(f);
+}
+
+function switchJobTab(t){
+  S.jobTab=t;
+  document.getElementById('jobDBPanel').style.display=t==='db'?'block':'none';
+  document.getElementById('jobPastePanel').style.display=t==='paste'?'block':'none';
+  document.getElementById('tbDB').classList.toggle('active',t==='db');
+  document.getElementById('tbPaste').classList.toggle('active',t==='paste');
+  checkReady();
+}
+
+function renderJobList(jobs){
+  document.getElementById('jobList').innerHTML=jobs.map(j=>`
+    <div class="job-item" id="ji-${j.id}" onclick="selectJob(${j.id})">
+      <div class="job-item-title">${j.title}</div>
+      <div class="job-item-meta">${j.company} · ${j.location.split('(')[0].trim()}</div>
+      <div class="job-item-tags">${j.required.slice(0,3).map(t=>`<span class="jtag">${t}</span>`).join('')}</div>
+    </div>`).join('');
+}
+
+function filterJobs(q){
+  const f=JOBS_DB.filter(j=>j.title.toLowerCase().includes(q.toLowerCase())||j.company.toLowerCase().includes(q.toLowerCase())||j.required.some(s=>s.toLowerCase().includes(q.toLowerCase())));
+  renderJobList(f);
+}
+
+function selectJob(id){
+  S.selectedJob=JOBS_DB.find(j=>j.id===id);
+  document.querySelectorAll('.job-item').forEach(e=>e.classList.remove('selected'));
+  document.getElementById('ji-'+id)?.classList.add('selected');
+  updateStep(2,true);checkReady();
+}
+
+function renderJobsGrid(){
+  document.getElementById('jobsGrid').innerHTML=JOBS_DB.map(j=>`
+    <div class="job-card" onclick="useJob(${j.id})">
+      <div class="job-card-company">${j.company}</div>
+      <div class="job-card-title">${j.title}</div>
+      <div class="job-card-loc">📍 ${j.location}</div>
+      <div class="job-card-tags">${j.required.slice(0,4).map(t=>`<span class="job-card-tag required">${t}</span>`).join('')}${j.nice.slice(0,2).map(t=>`<span class="job-card-tag">${t}</span>`).join('')}</div>
+      <div class="job-card-footer"><span class="job-card-type">${j.type}</span><span class="job-card-btn">Analyze for me →</span></div>
+    </div>`).join('');
+}
+
+function useJob(id){
+  S.selectedJob=JOBS_DB.find(j=>j.id===id);
+  showPage('upload',document.querySelector('.topnav-item'));
+  setTimeout(()=>{document.querySelectorAll('.job-item').forEach(e=>e.classList.remove('selected'));document.getElementById('ji-'+id)?.classList.add('selected');updateStep(2,true);checkReady();},100);
+}
+
+function updateStep(n,done){
+  const el=document.getElementById('fstep'+n);
+  if(done){el.classList.add('done');el.classList.remove('active');}
+  const next=document.getElementById('fstep'+(n+1));
+  if(next&&done)next.classList.add('active');
+  const con=document.getElementById('fcon'+n);
+  if(con&&done)con.classList.add('done');
+}
+
+function checkReady(){
+  const cv=S.cvText||document.getElementById('cvText').value.trim();
+  const hasCv=cv.length>30;
+  if(hasCv)updateStep(1,true);
+  const hasJob=S.selectedJob||(S.jobTab==='paste'&&document.getElementById('jdPaste').value.trim().length>50);
+  const ready=hasCv&&hasJob;
+  document.getElementById('analyzeBtn').disabled=!ready;
+  if(ready){const n=S.selectedJob?S.selectedJob.title:'Custom JD';document.getElementById('actionStatus').innerHTML=`<strong>Ready!</strong> "${n}" selected`;}
+  else if(hasCv)document.getElementById('actionStatus').textContent='Now select a target job';
+  else document.getElementById('actionStatus').textContent='Upload or paste your CV to start';
+}
+
+async function runAnalysis(){
+  const cv=document.getElementById('cvText').value||S.cvText;
+  const jd=S.selectedJob?S.selectedJob.description:document.getElementById('jdPaste').value;
+  if(!cv||!jd)return;
+
+  const overlay=document.getElementById('analyzingOverlay');
+  overlay.classList.add('show');
+  const steps=['as1','as2','as3','as4','as5','as6'];
+  let si=0;
+  const iv=setInterval(()=>{
+    if(si>0){const prev=document.getElementById(steps[si-1]);prev.classList.remove('active');prev.classList.add('done');prev.innerHTML='✓ '+prev.textContent.replace('✓ ','');}
+    if(si<steps.length){document.getElementById(steps[si]).classList.add('active');si++;}
+  },800);
+
+  const prompt=`You are Pathfinder AI — a career roadmap engine for pharma/biotech professionals. Analyze the CV against the job description and return ONLY valid JSON (no markdown fences, no preamble).
+
+CV:
+${cv.substring(0,2500)}
+
+JOB DESCRIPTION:
+${jd.substring(0,2000)}
+
+Return exactly this JSON structure:
+{
+  "jobTitle": "string",
+  "company": "string",
+  "matchScore": number,
+  "gapScore": number,
+  "strengths": ["string x4"],
+  "skillGaps": [{"skill":"string","currentLevel":number,"required":number,"priority":"high|medium|low"}],
+  "milestones": [{"period":"string","title":"string","description":"string","artifacts":["string"],"status":"done|active|upcoming|locked"}],
+  "thirtyDayPlan": [{"week":"string","tasks":[{"title":"string","type":"apply|learn|build|network","effort":"string"}]}],
+  "coverLetter": "string"
+}
+
+Rules: 3-5 skillGaps, exactly 5 milestones, 3 weeks in plan with 3-4 tasks each, cover letter 200-250 words, be specific to pharma/biotech.`;
+
+  try{
+    const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+    clearInterval(iv);
+    steps.forEach(s=>{const el=document.getElementById(s);el.classList.remove('active');el.classList.add('done');});
+    await new Promise(r=>setTimeout(r,600));
+    overlay.classList.remove('show');
+    if(!res.ok)throw new Error('API error '+res.status);
+    const data=await res.json();
+    const roadmap=data.roadmap;
+    S.roadmap=roadmap;
+    try{sessionStorage.setItem('pf_roadmap',JSON.stringify(roadmap));}catch(e){}
+    renderDashboard(roadmap);
+    showPage('dashboard',document.querySelectorAll('.topnav-item')[1]);
+    document.getElementById('topBadge').style.display='inline';
+    showToast('Roadmap generated! ✓');
+  }catch(err){
+    clearInterval(iv);
+    steps.forEach(s=>{const el=document.getElementById(s);el.classList.remove('active');el.classList.add('done');});
+    overlay.classList.remove('show');
+    const fb=fallback(S.selectedJob);S.roadmap=fb;
+    renderDashboard(fb);
+    showPage('dashboard',document.querySelectorAll('.topnav-item')[1]);
+    document.getElementById('topBadge').style.display='inline';
+    showToast('Demo roadmap shown (connect API for real analysis)');
+  }
+}
+
+function fallback(job){
+  const j=job||JOBS_DB[0];
+  return{jobTitle:j.title,company:j.company,matchScore:42,gapScore:58,
+    strengths:["Research methodology","Analytical thinking","Academic writing","Data interpretation"],
+    skillGaps:[
+      {skill:j.required[0]||"Core Technical Skill",currentLevel:20,required:90,priority:"high"},
+      {skill:j.required[1]||"Industry Knowledge",currentLevel:10,required:85,priority:"high"},
+      {skill:j.required[2]||"Regulatory Awareness",currentLevel:15,required:80,priority:"high"},
+      {skill:j.required[3]||"Software Tools",currentLevel:5,required:70,priority:"medium"}
+    ],
+    milestones:[
+      {period:"Now",title:"Baseline Assessment",description:"Document current skills and map gaps against target role requirements.",artifacts:["Gap Map","Updated CV"],status:"done"},
+      {period:"Month 1–3",title:"Core Skills Acquisition",description:`Focus on ${j.required[0]} and ${j.required[1]} via targeted online courses and self-study.`,artifacts:["Certificate","Mini-project"],status:"active"},
+      {period:"Month 4–8",title:"Industry Exposure",description:"Internship, volunteer project, or shadowing at a pharma/biotech organization.",artifacts:["Industry Reference","Portfolio item"],status:"upcoming"},
+      {period:"Month 9–16",title:"Specialization & Network",description:`Deepen expertise in ${j.required[2]}. Attend 1–2 industry conferences. Build professional network.`,artifacts:["Conference certificate","10+ contacts"],status:"locked"},
+      {period:"Month 17–24",title:`Land Role at ${j.company}`,description:"Apply with a strong portfolio and referrals. Target 3–5 companies in parallel.",artifacts:["Offer Letter"],status:"locked"}
+    ],
+    thirtyDayPlan:[
+      {week:"Week 1 — Quick Wins",tasks:[
+        {title:`Research best ${j.required[0]} courses on Coursera or edX`,type:"learn",effort:"2 hrs"},
+        {title:`Connect with 3 professionals at ${j.company} on LinkedIn`,type:"network",effort:"30 min"},
+        {title:"Update CV with pharma-specific keywords",type:"build",effort:"1 hr"}
+      ]},
+      {week:"Week 2 — Start Learning",tasks:[
+        {title:`Begin ${j.required[0]} beginner module`,type:"learn",effort:"4 hrs"},
+        {title:`Read 2 recent articles on ${j.required[1]}`,type:"learn",effort:"2 hrs"},
+        {title:"Shortlist 5 pharma companies for future applications",type:"apply",effort:"1 hr"}
+      ]},
+      {week:"Week 3–4 — Build & Apply",tasks:[
+        {title:`Complete first ${j.required[0]} certification module`,type:"learn",effort:"6 hrs"},
+        {title:"Attend a pharma/biotech webinar",type:"network",effort:"2 hrs"},
+        {title:"Draft one tailored internship application",type:"apply",effort:"3 hrs"},
+        {title:`Build a small project demonstrating ${j.required[0]}`,type:"build",effort:"4 hrs"}
+      ]}
+    ],
+    coverLetter:`Dear Hiring Team at ${j.company},
+
+I am writing to express my genuine interest in the ${j.title} role. My background in life sciences, combined with a structured approach to professional development, makes me eager to contribute to your team and grow within the pharma industry.
+
+Through my academic and research experience, I have developed strong foundations in analytical thinking and scientific communication. I am currently focused on building targeted expertise in ${j.required[0]} and ${j.required[1]} — skills I understand are central to success in this position. I am drawn to ${j.company} specifically because of its leadership in innovation and its commitment to patient outcomes.
+
+I approach skill development with urgency and structure — I learn fast, apply immediately, and maintain a clear long-term vision. I would welcome the opportunity to discuss how my background and ambition align with this role.
+
+Thank you for your time and consideration.
+
+Sincerely,
+[Your Name]`
+  };
+}
+
+function renderDashboard(r){
+  document.getElementById('dashEmpty').style.display='none';
+  document.getElementById('dashContent').style.display='block';
+  document.getElementById('heroTitle').innerHTML=`Your Roadmap to <em>${r.jobTitle} @ ${r.company}</em>`;
+  document.getElementById('heroSub').textContent='AI-generated · 2-year horizon · Personalized to your CV';
+  document.getElementById('matchPct').textContent=r.matchScore+'%';
+  document.getElementById('gapPct').textContent=r.gapScore+'%';
+  document.getElementById('milestoneCount').textContent=(r.milestones||[]).length;
+
+  document.getElementById('skillGapBody').innerHTML=(r.skillGaps||[]).map(g=>{
+    const c=g.currentLevel<30?'low':g.currentLevel<60?'mid':'high';
+    return`<div class="sg-item"><div class="sg-row"><span class="sg-name">${g.skill}</span><span class="sg-pct">${g.currentLevel}% → ${g.required}%</span></div><div class="sg-track"><div class="sg-fill ${c}" style="width:0%" data-w="${g.currentLevel}%"></div></div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('.sg-fill').forEach(el=>el.style.width=el.dataset.w),100);
+
+  document.getElementById('strengthsBody').innerHTML=(r.strengths||[]).map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--ink)"><span style="color:var(--teal)">✓</span>${s}</div>`).join('');
+
+  const sm={done:'done',active:'active',upcoming:'',locked:'locked'};
+  document.getElementById('timelineBody').innerHTML=(r.milestones||[]).map(m=>{
+    const tc=m.status==='done'?'done':m.status==='active'?'active':m.status==='locked'?'locked':'';
+    return`<div class="tl-item ${sm[m.status]||''}"><div class="tl-dot"></div><div class="tl-period">${m.period}</div><div class="tl-title">${m.title}</div><div class="tl-desc">${m.description}</div><div class="tl-tags">${(m.artifacts||[]).map(a=>`<span class="tl-tag ${tc}">${a}</span>`).join('')}</div></div>`;
+  }).join('');
+
+  const tm={apply:'tb-apply',learn:'tb-learn',build:'tb-build',network:'tb-network'};
+  document.getElementById('planBody').innerHTML=(r.thirtyDayPlan||[]).map(w=>`
+    <div class="task-section"><div class="task-week">${w.week}</div>
+    ${(w.tasks||[]).map(t=>`<div class="task-row" onclick="toggleTask(this)"><div class="task-cb"></div><div style="flex:1"><div class="task-text">${t.title}</div><div class="task-meta-sm">Est. ${t.effort}</div></div><span class="task-type-badge ${tm[t.type]||'tb-learn'}">${t.type}</span></div>`).join('')}
+    </div>`).join('');
+
+  const lb=document.getElementById('letterBox');
+  lb.innerHTML='';
+  S.coverLetterText=r.coverLetter||'';
+  typeWrite(lb,S.coverLetterText,12);
+}
+
+function typeWrite(el,text,delay){
+  let i=0;
+  const cur=document.createElement('span');cur.className='typing-cursor';el.appendChild(cur);
+  const iv=setInterval(()=>{
+    if(i<text.length){el.insertBefore(document.createTextNode(text[i]),cur);i++;el.scrollTop=el.scrollHeight;}
+    else{clearInterval(iv);cur.remove();}
+  },delay);
+}
+
+function copyCoverLetter(){
+  navigator.clipboard.writeText(S.coverLetterText).catch(()=>{});
+  showToast('Cover letter copied!');
+}
+
+function toggleTask(el){
+  el.classList.toggle('checked');
+  el.querySelector('.task-cb').textContent=el.classList.contains('checked')?'✓':'';
+  if(el.classList.contains('checked'))showToast('Task complete! Keep going 🎯');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
