@@ -1,779 +1,1405 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pathfinder AI — Pharma Career Engine</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap');
+
 :root {
-  --bg: #f5f3ef;
-  --bg2: #eceae4;
-  --surface: #ffffff;
-  --surface2: #f9f8f5;
-  --border: #e0ddd6;
-  --border2: #ccc9bf;
-  --ink: #1a1916;
-  --ink2: #4a4840;
-  --muted: #8a877e;
-  --teal: #0d7a6b;
-  --teal-light: #e6f4f1;
-  --teal-mid: #b2ddd7;
-  --amber: #c4660a;
-  --amber-light: #fef3e8;
-  --red: #c0392b;
-  --red-light: #fdecea;
-  --blue: #2563a8;
-  --blue-light: #eaf0fb;
-  --font-h: 'Bricolage Grotesque', sans-serif;
-  --font-b: 'Instrument Sans', sans-serif;
+  --bg: #080b12;
+  --bg2: #0e1420;
+  --bg3: #151d2e;
+  --surface: #1a2338;
+  --surface2: #212d45;
+  --surface3: #283553;
+  --border: #263050;
+  --border2: #334168;
+  --text: #e8ecf4;
+  --text2: #8d9bb5;
+  --text3: #5c6b87;
+  --accent: #00e8a2;
+  --accent-dim: rgba(0,232,162,0.12);
+  --blue: #3b9eff;
+  --blue-dim: rgba(59,158,255,0.12);
+  --violet: #a374ff;
+  --violet-dim: rgba(163,116,255,0.12);
+  --amber: #ffb84d;
+  --amber-dim: rgba(255,184,77,0.12);
+  --rose: #ff6b9d;
+  --rose-dim: rgba(255,107,157,0.12);
+  --cyan: #22d3ee;
+  --cyan-dim: rgba(34,211,238,0.12);
+  --danger: #ff5555;
+  --gemini: #4285f4;
+  --gemini-dim: rgba(66,133,244,0.12);
   --radius: 14px;
-  --shadow: 0 2px 12px rgba(0,0,0,0.07);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+  --radius-sm: 8px;
+  --font: 'Outfit', system-ui, sans-serif;
+  --mono: 'DM Mono', monospace;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
 }
+
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:15px;line-height:1.6;min-height:100vh;}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:50;}
-.logo{font-family:var(--font-h);font-size:20px;font-weight:800;color:var(--teal);display:flex;align-items:center;gap:8px;}
-.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);}
-.topnav{display:flex;gap:4px;}
-.topnav-item{padding:6px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink2);transition:all .15s;}
-.topnav-item:hover{background:var(--bg2);}
-.topnav-item.active{background:var(--teal-light);color:var(--teal);font-weight:600;}
-.pill-badge{background:var(--teal);color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
-.page{display:none;padding:40px;max-width:1100px;margin:0 auto;animation:fadeUp .3s ease;}
-.page.active{display:block;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.section-header{margin-bottom:32px;}
-.section-eyebrow{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal);margin-bottom:8px;}
-.section-title{font-family:var(--font-h);font-size:36px;font-weight:800;color:var(--ink);line-height:1.1;letter-spacing:-.5px;}
-.section-title em{font-style:normal;color:var(--teal);}
-.section-sub{font-size:16px;color:var(--muted);margin-top:10px;max-width:520px;}
-.flow-steps{display:flex;align-items:center;gap:0;margin-bottom:36px;}
-.flow-step{display:flex;align-items:center;gap:10px;}
-.flow-step-num{width:28px;height:28px;border-radius:50%;background:var(--bg2);color:var(--muted);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--border);flex-shrink:0;}
-.flow-step.done .flow-step-num{background:var(--teal);color:white;border-color:var(--teal);}
-.flow-step.active .flow-step-num{background:var(--ink);color:white;border-color:var(--ink);}
-.flow-step-label{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;}
-.flow-step.done .flow-step-label{color:var(--teal);}
-.flow-step.active .flow-step-label{color:var(--ink);}
-.flow-connector{flex:1;height:1px;background:var(--border);margin:0 12px;min-width:20px;}
-.flow-connector.done{background:var(--teal-mid);}
-.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px;}
-.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface);position:relative;overflow:hidden;}
-.upload-zone:hover,.upload-zone.dragover{border-color:var(--teal);background:var(--teal-light);}
-.upload-zone.has-file{border-color:var(--teal);border-style:solid;background:var(--teal-light);}
-.upload-icon{font-size:36px;margin-bottom:12px;}
-.upload-title{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;}
-.upload-sub{font-size:13px;color:var(--muted);}
-.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-.panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.panel-title{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--ink);}
-.panel-body{padding:16px;}
-.tab-toggle{display:flex;background:var(--bg2);border-radius:8px;padding:3px;gap:2px;}
-.tab-btn{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted);border:none;background:none;font-family:var(--font-b);}
-.tab-btn.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.job-search{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font-b);font-size:13px;outline:none;background:var(--bg);color:var(--ink);margin-bottom:10px;}
-.job-search:focus{border-color:var(--teal);}
-.job-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
-.job-item{padding:12px 14px;border-radius:9px;cursor:pointer;border:1px solid transparent;transition:all .15s;background:var(--surface2);}
-.job-item:hover{border-color:var(--teal-mid);background:var(--teal-light);}
-.job-item.selected{border-color:var(--teal);background:var(--teal-light);}
-.job-item-title{font-size:13px;font-weight:600;color:var(--ink);}
-.job-item-meta{font-size:11px;color:var(--muted);margin-top:2px;}
-.job-item-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
-.jtag{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--bg2);color:var(--ink2);}
-.jd-paste{width:100%;min-height:200px;padding:12px;border:1px solid var(--border);border-radius:9px;font-family:var(--font-b);font-size:13px;line-height:1.6;color:var(--ink);background:var(--bg);outline:none;resize:vertical;}
-.jd-paste:focus{border-color:var(--teal);}
-.action-bar{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);}
-.action-status{font-size:13px;color:var(--muted);}
-.action-status strong{color:var(--ink);}
-.btn{padding:11px 28px;border-radius:10px;border:none;font-family:var(--font-b);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}
-.btn-primary{background:var(--teal);color:white;}
-.btn-primary:hover:not(:disabled){background:#0a6659;transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,122,107,.3);}
-.btn-primary:disabled{background:var(--border2);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
-.btn-ghost{background:transparent;color:var(--ink2);border:1px solid var(--border);}
-.btn-ghost:hover{background:var(--bg2);}
-.btn-sm{padding:7px 16px;font-size:12px;}
-.analyzing-overlay{position:fixed;inset:0;background:rgba(245,243,239,.95);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px);}
-.analyzing-overlay.show{opacity:1;pointer-events:all;}
-.analyzing-logo{font-family:var(--font-h);font-size:32px;font-weight:800;color:var(--teal);}
-.analyzing-steps{display:flex;flex-direction:column;gap:10px;width:380px;}
-.astep{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;background:var(--surface);border:1px solid var(--border);font-size:13px;color:var(--muted);transition:all .4s;}
-.astep.active{color:var(--ink);border-color:var(--teal-mid);background:var(--teal-light);}
-.astep.done{color:var(--teal);border-color:var(--teal-mid);}
-.astep-dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0;}
-.astep.active .astep-dot{animation:dot-pulse 1s infinite;}
-@keyframes dot-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
-.dash-hero{background:var(--ink);border-radius:20px;padding:32px 36px;margin-bottom:28px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;position:relative;overflow:hidden;}
-.dash-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(13,122,107,.3) 0%,transparent 70%);}
-.dash-hero-title{font-family:var(--font-h);font-size:28px;font-weight:800;color:white;margin-bottom:8px;line-height:1.2;}
-.dash-hero-title em{font-style:normal;color:#4ecdb4;}
-.dash-hero-sub{font-size:14px;color:rgba(255,255,255,.6);}
-.dash-hero-stats{display:flex;gap:28px;}
-.hero-stat{text-align:center;}
-.hero-stat-val{font-family:var(--font-h);font-size:28px;font-weight:800;color:white;}
-.hero-stat-val.green{color:#4ecdb4;}
-.hero-stat-val.amber{color:#f5a54a;}
-.hero-stat-label{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;}
-.dash-grid{display:grid;grid-template-columns:280px 1fr;gap:24px;margin-bottom:28px;}
-.dash-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-.card-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.card-head-title{font-family:var(--font-h);font-size:14px;font-weight:700;color:var(--ink);}
-.card-body{padding:20px;}
-.sg-item{margin-bottom:14px;}
-.sg-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
-.sg-name{font-size:13px;color:var(--ink);font-weight:500;}
-.sg-pct{font-size:11px;color:var(--muted);}
-.sg-track{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden;}
-.sg-fill{height:100%;border-radius:4px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
-.sg-fill.low{background:var(--red);}
-.sg-fill.mid{background:var(--amber);}
-.sg-fill.high{background:var(--teal);}
-.timeline{position:relative;}
-.tl-line{position:absolute;left:17px;top:0;bottom:0;width:2px;background:var(--border);}
-.tl-item{position:relative;padding-left:44px;padding-bottom:28px;}
-.tl-item:last-child{padding-bottom:0;}
-.tl-dot{position:absolute;left:10px;top:3px;width:16px;height:16px;border-radius:50%;border:2px solid var(--border);background:var(--bg);z-index:1;transition:all .2s;}
-.tl-item.done .tl-dot{background:var(--teal);border-color:var(--teal);}
-.tl-item.active .tl-dot{background:var(--ink);border-color:var(--ink);box-shadow:0 0 0 4px rgba(26,25,22,.1);}
-.tl-item.locked .tl-dot{background:var(--bg2);}
-.tl-period{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px;}
-.tl-title{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:3px;}
-.tl-item.locked .tl-title{color:var(--muted);}
-.tl-desc{font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.5;}
-.tl-tags{display:flex;flex-wrap:wrap;gap:6px;}
-.tl-tag{padding:3px 10px;border-radius:5px;font-size:11px;font-weight:600;background:var(--bg2);color:var(--ink2);border:1px solid var(--border);}
-.tl-tag.done{background:var(--teal-light);color:var(--teal);border-color:var(--teal-mid);}
-.tl-tag.active{background:var(--blue-light);color:var(--blue);border-color:#bdd4f5;}
-.tl-tag.locked{color:var(--muted);font-style:italic;}
-.task-section{margin-bottom:20px;}
-.task-week{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:10px;}
-.task-week::after{content:'';flex:1;height:1px;background:var(--border);}
-.task-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:9px;margin-bottom:7px;cursor:pointer;background:var(--surface2);border:1px solid transparent;transition:all .15s;}
-.task-row:hover{border-color:var(--teal-mid);}
-.task-row.checked{opacity:.55;}
-.task-cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .15s;}
-.task-row.checked .task-cb{background:var(--teal);border-color:var(--teal);color:white;}
-.task-row.checked .task-text{text-decoration:line-through;color:var(--muted);}
-.task-text{flex:1;font-size:13px;color:var(--ink);}
-.task-meta-sm{font-size:11px;color:var(--muted);}
-.task-type-badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;flex-shrink:0;}
-.tb-apply{background:var(--amber-light);color:var(--amber);}
-.tb-learn{background:var(--blue-light);color:var(--blue);}
-.tb-build{background:var(--teal-light);color:var(--teal);}
-.tb-network{background:#f3e8ff;color:#7c3aed;}
-.letter-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;font-size:13px;line-height:1.8;color:var(--ink2);white-space:pre-wrap;max-height:320px;overflow-y:auto;font-family:var(--font-b);}
-.typing-cursor{display:inline-block;width:2px;height:13px;background:var(--teal);margin-left:1px;vertical-align:middle;animation:blink .8s infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-.toast{position:fixed;bottom:28px;right:28px;z-index:300;background:var(--ink);color:white;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;transform:translateY(60px);opacity:0;transition:all .3s;box-shadow:var(--shadow-lg);}
-.toast.show{transform:translateY(0);opacity:1;}
-.empty-state{text-align:center;padding:60px 40px;}
-.empty-icon{font-size:52px;margin-bottom:16px;}
-.empty-title{font-family:var(--font-h);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px;}
-.empty-sub{color:var(--muted);font-size:14px;margin-bottom:24px;}
-.jobs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-.job-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all .15s;cursor:pointer;}
-.job-card:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:var(--shadow);}
-.job-card-company{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:6px;}
-.job-card-title{font-family:var(--font-h);font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;line-height:1.3;}
-.job-card-loc{font-size:12px;color:var(--muted);margin-bottom:10px;}
-.job-card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
-.job-card-tag{padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;background:var(--bg2);color:var(--ink2);}
-.job-card-tag.required{background:var(--red-light);color:var(--red);}
-.job-card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;margin-top:4px;}
-.job-card-type{font-size:11px;color:var(--muted);}
-.job-card-btn{font-size:12px;font-weight:600;color:var(--teal);cursor:pointer;}
-.job-card-btn:hover{text-decoration:underline;}
-::-webkit-scrollbar{width:6px;height:6px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
-@media(max-width:768px){
-  .topbar{padding:0 16px;}
-  .page{padding:20px 16px;}
-  .upload-grid,.dash-grid,.jobs-grid{grid-template-columns:1fr;}
-  .dash-grid-3{grid-template-columns:1fr;}
-  .dash-hero{grid-template-columns:1fr;}
-  .dash-hero-stats{display:none;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;}
+
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  opacity:0.015;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body::before{
+  content:'';position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 10% 15%, rgba(0,232,162,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(66,133,244,0.03) 0%, transparent 60%);
 }
 
-.filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-family:var(--font-b);font-size:12px;font-weight:600;cursor:pointer;color:var(--ink2);transition:all .15s;}
-.filter-btn:hover{border-color:var(--teal);color:var(--teal);}
-.filter-btn.active{background:var(--teal);color:white;border-color:var(--teal);}
-.job-card-salary{font-size:12px;font-weight:700;color:var(--teal);margin-bottom:4px;}
-.job-card-exp{font-size:11px;color:var(--muted);margin-bottom:10px;}
-.programs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-.prog-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all .15s;position:relative;}
-.prog-card:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:var(--shadow);}
-.prog-score{position:absolute;top:14px;right:14px;font-size:11px;font-weight:700;color:var(--amber);}
-.prog-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
-.prog-type.internship{color:var(--teal);}
-.prog-type.traineeship{color:var(--blue);}
-.prog-type.summer{color:var(--amber);}
-.prog-type.training{color:#7c3aed;}
-.prog-name{font-family:var(--font-h);font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px;line-height:1.3;}
-.prog-org{font-size:12px;color:var(--muted);margin-bottom:10px;}
-.prog-meta{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
-.prog-meta-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);}
-.prog-meta-icon{font-size:12px;flex-shrink:0;}
-.prog-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px;margin-top:4px;}
-.prog-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;text-transform:uppercase;}
-.prog-status.open{background:var(--teal-light);color:var(--teal);}
-.prog-status.recurring{background:var(--blue-light);color:var(--blue);}
-.prog-status.active{background:var(--amber-light);color:var(--amber);}
-.prog-status.upcoming{background:var(--bg2);color:var(--muted);}
-.prog-link{font-size:12px;font-weight:600;color:var(--teal);text-decoration:none;}
-.prog-link:hover{text-decoration:underline;}
-.prog-intl{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;}
-.prog-intl.yes{background:var(--teal-light);color:var(--teal);}
-.prog-intl.no{background:var(--red-light);color:var(--red);}
-.prog-intl.unclear{background:var(--bg2);color:var(--muted);}
-@media(max-width:768px){.programs-grid{grid-template-columns:1fr;}}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
+/* ═══ HEADER ═══ */
+header{
+  padding:16px 28px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,11,18,0.92);backdrop-filter:blur(24px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.2em;font-weight:700;letter-spacing:-0.5px;}
+.logo-mark{
+  width:32px;height:32px;
+  background:linear-gradient(135deg,var(--accent),var(--gemini));
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  flex-shrink:0;animation:logoPulse 4s ease-in-out infinite;
+}
+@keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 6px rgba(0,232,162,0.4));}50%{filter:drop-shadow(0 0 14px rgba(66,133,244,0.5));}}
+.logo em{font-style:normal;color:var(--accent);}
+.tag{padding:3px 10px;border-radius:20px;font-size:0.65em;font-family:var(--mono);
+  background:var(--gemini-dim);color:var(--gemini);border:1px solid rgba(66,133,244,0.3);letter-spacing:1px;}
+
+nav{display:flex;gap:3px;background:var(--bg3);border-radius:10px;padding:3px;}
+nav button{
+  padding:9px 16px;border:none;background:transparent;color:var(--text3);
+  font-family:var(--font);font-size:0.84em;font-weight:500;border-radius:7px;
+  cursor:pointer;transition:all var(--transition);white-space:nowrap;
+}
+nav button:hover{color:var(--text2);background:var(--surface);}
+nav button.active{background:var(--accent);color:var(--bg);font-weight:600;}
+
+/* ═══ PAGES ═══ */
+.page{display:none;padding:28px;max-width:1180px;margin:0 auto;position:relative;z-index:1;}
+.page.active{display:block;animation:pageIn 0.35s ease;}
+@keyframes pageIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+
+/* ═══ CARDS ═══ */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:26px;margin-bottom:22px;
+  transition:border-color var(--transition);
+}
+.card:hover{border-color:var(--border2);}
+.card-title{
+  display:flex;align-items:center;gap:10px;
+  font-size:1.1em;font-weight:600;margin-bottom:18px;
+}
+.dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* ═══ BUTTONS ═══ */
+.btn{
+  padding:12px 26px;border:none;border-radius:var(--radius-sm);
+  font-family:var(--font);font-size:0.92em;font-weight:600;
+  cursor:pointer;transition:all var(--transition);
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-accent{
+  background:linear-gradient(135deg,var(--accent),#00c98a);color:var(--bg);
+  box-shadow:0 4px 20px rgba(0,232,162,0.2);
+}
+.btn-accent:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,232,162,0.3);}
+.btn-accent:disabled{opacity:0.4;pointer-events:none;transform:none;box-shadow:none;}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{background:var(--bg3);border-color:var(--border2);}
+.btn-sm{padding:7px 14px;font-size:0.82em;}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent);}
+.btn-outline:hover{background:var(--accent-dim);}
+.btn-gemini{
+  background:linear-gradient(135deg,var(--gemini),#34a853);color:#fff;
+  box-shadow:0 4px 20px rgba(66,133,244,0.25);
+}
+.btn-gemini:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(66,133,244,0.4);}
+.btn-gemini:disabled{opacity:0.4;pointer-events:none;transform:none;box-shadow:none;}
+
+/* ═══ HERO ═══ */
+.hero{
+  text-align:center;padding:52px 28px;position:relative;overflow:hidden;
+  background:linear-gradient(170deg,var(--surface) 0%,var(--bg3) 50%,var(--bg2) 100%);
+  border:1px solid var(--border);border-radius:var(--radius);margin-bottom:28px;
+}
+.hero::before{
+  content:'';position:absolute;inset:-50%;
+  background:conic-gradient(from 0deg,transparent 0%,rgba(0,232,162,0.02) 20%,transparent 40%,rgba(66,133,244,0.02) 60%,transparent 80%);
+  animation:heroSpin 40s linear infinite;
+}
+@keyframes heroSpin{to{transform:rotate(360deg);}}
+.hero>*{position:relative;z-index:1;}
+.hero h1{
+  font-size:2.6em;font-weight:800;letter-spacing:-1.5px;margin-bottom:14px;
+  background:linear-gradient(135deg,var(--text) 30%,var(--accent) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero p{color:var(--text2);font-size:1.05em;max-width:620px;margin:0 auto 30px;line-height:1.75;}
+.hero-stats{display:flex;gap:28px;justify-content:center;color:var(--text3);font-size:0.88em;margin-top:16px;flex-wrap:wrap;}
+.hero-stat-pill{
+  display:flex;align-items:center;gap:6px;padding:5px 12px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:20px;
+}
+
+/* ═══ GEMINI BADGE ═══ */
+.gemini-badge{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 12px;
+  background:var(--gemini-dim);border:1px solid rgba(66,133,244,0.3);
+  border-radius:20px;font-size:0.75em;color:var(--gemini);font-family:var(--mono);
+  letter-spacing:0.5px;
+}
+.gemini-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--gemini);
+  animation:geminiBlink 2s ease-in-out infinite;
+}
+@keyframes geminiBlink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* ═══ UPLOAD AREA ═══ */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px;}
+@media(max-width:768px){.upload-grid{grid-template-columns:1fr;}}
+
+.drop-zone{
+  border:2px dashed var(--border2);border-radius:var(--radius);
+  padding:36px 24px;text-align:center;cursor:pointer;
+  transition:all var(--transition);background:var(--bg3);
+  position:relative;
+}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:var(--accent-dim);}
+.drop-zone.has-file{border-color:var(--accent);border-style:solid;background:rgba(0,232,162,0.06);}
+.drop-zone .dz-icon{font-size:2em;margin-bottom:10px;display:block;}
+.drop-zone .dz-title{font-weight:600;margin-bottom:4px;}
+.drop-zone .dz-sub{font-size:0.82em;color:var(--text3);}
+.drop-zone input[type=file]{display:none;}
+.file-info{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--surface);border-radius:var(--radius-sm);margin-top:12px;
+  font-size:0.85em;
+}
+.file-info .fi-name{flex:1;font-family:var(--mono);color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-info .fi-remove{cursor:pointer;color:var(--danger);font-size:0.9em;}
+
+textarea.profile-input{
+  width:100%;min-height:120px;padding:16px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-family:var(--font);font-size:0.92em;
+  resize:vertical;transition:border-color var(--transition);line-height:1.7;
+}
+textarea.profile-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+textarea.profile-input::placeholder{color:var(--text3);}
+
+/* ═══ API KEY ROW ═══ */
+.api-row{
+  display:flex;gap:10px;align-items:center;padding:14px 18px;
+  background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:22px;
+  border:1px solid var(--border);
+}
+.api-row label{font-size:0.82em;color:var(--text3);white-space:nowrap;font-family:var(--mono);}
+.api-row input{
+  flex:1;padding:8px 12px;background:var(--surface);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-family:var(--mono);font-size:0.85em;
+}
+.api-row input:focus{outline:none;border-color:var(--gemini);}
+.api-status{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.api-status.ok{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+.api-status.off{background:var(--danger);}
+
+/* ═══ ANALYSIS LOADING ═══ */
+.analysis-loader{text-align:center;padding:40px;}
+.loader-steps{text-align:left;max-width:400px;margin:20px auto 0;}
+.loader-step{
+  display:flex;align-items:center;gap:12px;padding:10px 0;
+  font-size:0.92em;color:var(--text3);transition:color 0.3s;
+}
+.loader-step.active{color:var(--text);}
+.loader-step.done{color:var(--accent);}
+.step-dot{
+  width:24px;height:24px;border-radius:6px;flex-shrink:0;
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:0.7em;transition:all 0.3s;
+}
+.loader-step.active .step-dot{border-color:var(--gemini);background:var(--gemini-dim);animation:pulse 1.5s infinite;}
+.loader-step.done .step-dot{border-color:var(--accent);background:var(--accent-dim);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
+.spinner{
+  width:44px;height:44px;border-radius:50%;
+  background:conic-gradient(var(--gemini) 0deg, var(--accent) 120deg, transparent 120deg);
+  animation:spin 0.9s linear infinite;margin:0 auto 16px;
+  mask:radial-gradient(farthest-side, transparent 65%, black 65%);
+  -webkit-mask:radial-gradient(farthest-side, transparent 65%, black 65%);
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ═══ PROGRESS ═══ */
+.progress-bar{height:5px;background:var(--bg3);border-radius:3px;margin-bottom:28px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--gemini));transition:width 0.5s ease;}
+.progress-label{display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.82em;color:var(--text3);font-family:var(--mono);}
+
+/* ═══ QUIZ ═══ */
+.q-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:32px;margin-bottom:22px;
+  animation:slideQ 0.35s ease;
+}
+@keyframes slideQ{from{opacity:0;transform:translateX(24px);}to{opacity:1;transform:none;}}
+.q-badge{
+  display:inline-block;padding:3px 10px;border-radius:5px;
+  font-size:0.72em;font-weight:600;margin-bottom:14px;font-family:var(--mono);letter-spacing:0.5px;
+}
+.q-scenario{
+  color:var(--text2);font-size:0.9em;line-height:1.65;margin-bottom:18px;
+  padding:14px;background:var(--bg3);border-radius:var(--radius-sm);
+  border-left:3px solid var(--accent);
+}
+.q-text{font-size:1.1em;font-weight:600;margin-bottom:20px;}
+.opts{display:flex;flex-direction:column;gap:8px;}
+.opt{
+  padding:14px 18px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);
+  font-size:0.92em;text-align:left;cursor:pointer;transition:all var(--transition);
+  display:flex;align-items:flex-start;gap:12px;line-height:1.5;
+}
+.opt:hover{border-color:var(--accent);background:rgba(0,232,162,0.04);}
+.opt.sel{border-color:var(--accent);background:rgba(0,232,162,0.08);}
+.opt-key{
+  flex-shrink:0;width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.78em;font-weight:700;font-family:var(--mono);
+  background:var(--surface2);color:var(--text3);
+}
+.opt.sel .opt-key{background:var(--accent);color:var(--bg);}
+.q-nav{display:flex;justify-content:space-between;margin-top:20px;}
+
+/* ═══ RESULTS ═══ */
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+@media(max-width:768px){.res-grid{grid-template-columns:1fr;}}
+.radar-wrap{max-width:500px;margin:0 auto;padding:12px;}
+
+.bar-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.bar-row:last-child{border:none;}
+.bar-label{width:170px;font-size:0.85em;color:var(--text2);flex-shrink:0;}
+.bar-track{flex:1;height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width 1s ease;}
+.bar-val{width:34px;text-align:right;font-family:var(--mono);font-weight:600;font-size:0.88em;}
+
+/* ═══ TABS ═══ */
+.tabs{display:flex;gap:3px;margin-bottom:22px;flex-wrap:wrap;}
+.tab{
+  padding:9px 16px;border:1px solid var(--border);background:var(--surface);
+  color:var(--text3);border-radius:var(--radius-sm);font-family:var(--font);
+  font-size:0.84em;font-weight:500;cursor:pointer;transition:all var(--transition);
+}
+.tab:hover{border-color:var(--border2);color:var(--text2);}
+.tab.on{background:var(--gemini);color:#fff;border-color:var(--gemini);}
+.tp{display:none;animation:fadeIn 0.3s;}
+.tp.on{display:block;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+/* ═══ JOBS ═══ */
+.jobs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;}
+.jcard{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  transition:all var(--transition);display:block;text-decoration:none;color:var(--text);
+  position:relative;overflow:hidden;
+}
+.jcard::after{
+  content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(135deg,rgba(0,232,162,0.04),rgba(66,133,244,0.04));
+  transition:opacity var(--transition);
+}
+.jcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow);}
+.jcard:hover::after{opacity:1;}
+.jtrack{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:0.7em;font-weight:600;margin-bottom:8px;font-family:var(--mono);
+}
+.t-clin{background:var(--accent-dim);color:var(--accent);}
+.t-reg{background:var(--blue-dim);color:var(--blue);}
+.t-comm{background:var(--violet-dim);color:var(--violet);}
+.t-acad{background:var(--amber-dim);color:var(--amber);}
+.t-mgmt{background:var(--rose-dim);color:var(--rose);}
+.t-rd{background:var(--cyan-dim);color:var(--cyan);}
+.jname{font-weight:600;margin-bottom:4px;font-size:1em;}
+.jcomp{color:var(--text3);font-size:0.85em;margin-bottom:8px;}
+.jtags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.jtag{padding:2px 7px;background:var(--bg3);border-radius:4px;font-size:0.72em;color:var(--text3);}
+.jmatch{
+  display:inline-flex;align-items:center;gap:4px;padding:2px 8px;
+  border-radius:4px;font-size:0.75em;font-weight:600;font-family:var(--mono);
+}
+.m-hi{background:var(--accent-dim);color:var(--accent);}
+.m-md{background:var(--amber-dim);color:var(--amber);}
+.m-lo{background:rgba(255,85,85,0.12);color:var(--danger);}
+
+/* Filters */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.fbtn{
+  padding:7px 14px;border:1px solid var(--border);background:var(--surface);
+  color:var(--text3);border-radius:7px;font-family:var(--font);
+  font-size:0.82em;cursor:pointer;transition:all var(--transition);
+}
+.fbtn:hover{border-color:var(--accent);color:var(--text);}
+.fbtn.on{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+
+/* ═══ AI RESPONSE BLOCK ═══ */
+.ai-block{
+  padding:20px;background:var(--bg3);border-radius:var(--radius-sm);
+  border-left:3px solid var(--gemini);margin-bottom:16px;
+  font-size:0.92em;line-height:1.75;color:var(--text2);
+  white-space:pre-wrap;
+}
+.ai-block strong{color:var(--text);}
+
+/* ═══ REC ITEMS ═══ */
+.rec{display:flex;gap:14px;padding:14px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:10px;align-items:flex-start;}
+.rec-n{
+  flex-shrink:0;width:30px;height:30px;border-radius:7px;
+  background:linear-gradient(135deg,var(--accent),var(--gemini));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#fff;font-size:0.82em;
+}
+.rec-t{font-size:0.9em;line-height:1.6;color:var(--text2);}
+.rec-t strong{color:var(--text);}
+
+/* ═══ MANUAL ═══ */
+.m-group{margin-bottom:26px;}
+.m-group-title{padding:10px 16px;border-radius:var(--radius-sm);margin-bottom:12px;font-weight:600;font-size:0.95em;}
+.m-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);}
+.m-row:last-child{border:none;}
+.m-row .m-label{flex:1;}
+.m-row .m-desc{font-size:0.78em;color:var(--text3);margin-top:2px;}
+.m-row select{
+  padding:7px 10px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-family:var(--font);font-size:0.9em;cursor:pointer;
+}
+.m-row select:focus{outline:none;border-color:var(--accent);}
+
+/* ═══ COVER LETTER ═══ */
+.cover-letter{
+  padding:24px;background:var(--bg3);border-radius:var(--radius);
+  border:1px solid var(--border);font-size:0.92em;line-height:1.8;
+  color:var(--text2);white-space:pre-wrap;max-height:500px;overflow-y:auto;
+}
+
+/* ═══ TOAST NOTIFICATION ═══ */
+.toast{
+  position:fixed;bottom:28px;right:28px;z-index:10000;
+  padding:12px 20px;background:var(--surface);border:1px solid var(--accent);
+  border-radius:var(--radius-sm);font-size:0.88em;color:var(--text);
+  box-shadow:var(--shadow);animation:toastIn 0.3s ease;
+  display:flex;align-items:center;gap:8px;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+/* ═══ CHAT / AI DIALOG ═══ */
+.chat-wrap{
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;display:flex;flex-direction:column;height:480px;
+}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.chat-msg{
+  max-width:80%;padding:12px 16px;border-radius:14px;font-size:0.92em;line-height:1.65;
+  animation:msgIn 0.25s ease;
+}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.chat-msg.user{
+  align-self:flex-end;background:linear-gradient(135deg,var(--accent),#00c98a);
+  color:var(--bg);font-weight:500;border-bottom-right-radius:4px;
+}
+.chat-msg.ai{
+  align-self:flex-start;background:var(--surface2);color:var(--text2);
+  border:1px solid var(--border);border-bottom-left-radius:4px;
+}
+.chat-msg.ai strong{color:var(--text);}
+.chat-msg.thinking{
+  align-self:flex-start;background:var(--surface);border:1px solid var(--border);
+  color:var(--text3);font-style:italic;padding:10px 16px;
+}
+.chat-msg.thinking::after{
+  content:'...';animation:dots 1.2s steps(3,end) infinite;
+}
+@keyframes dots{0%,100%{clip-path:inset(0 67% 0 0);}33%{clip-path:inset(0 33% 0 0);}67%{clip-path:inset(0 0% 0 0);}}
+.chat-input-row{
+  display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--border);
+  background:var(--surface);
+}
+.chat-input-row input{
+  flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:0.92em;
+}
+.chat-input-row input:focus{outline:none;border-color:var(--gemini);}
+
+/* Page header */
+.pg-head{margin-bottom:22px;}
+.pg-head h2{font-size:1.6em;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px;}
+.pg-head p{color:var(--text2);font-size:0.95em;}
 </style>
 </head>
 <body>
+<div class="app">
 
-<div class="analyzing-overlay" id="analyzingOverlay">
-  <div class="analyzing-logo">⬡ Pathfinder AI</div>
-  <div style="font-size:15px;color:var(--ink2);margin-top:-12px">Analyzing your profile against the job requirements...</div>
-  <div class="analyzing-steps">
-    <div class="astep" id="as1"><div class="astep-dot"></div>Extracting skills &amp; experience from CV</div>
-    <div class="astep" id="as2"><div class="astep-dot"></div>Parsing job requirements &amp; must-haves</div>
-    <div class="astep" id="as3"><div class="astep-dot"></div>Computing skill gap score</div>
-    <div class="astep" id="as4"><div class="astep-dot"></div>Generating 2-year milestone roadmap</div>
-    <div class="astep" id="as5"><div class="astep-dot"></div>Building 30-day action plan</div>
-    <div class="astep" id="as6"><div class="astep-dot"></div>Drafting cover letter</div>
+<header>
+  <div class="logo">
+    <div class="logo-mark"></div>
+    Pathfinder <em>AI</em>
+    <span class="tag">GEMINI</span>
   </div>
-</div>
-
-<div class="toast" id="toast"><span>✓</span><span id="toastMsg">Done!</span></div>
-
-<header class="topbar">
-  <div class="logo"><div class="logo-dot"></div>Pathfinder AI</div>
-  <nav class="topnav">
-    <div class="topnav-item active" onclick="showPage('upload',this)">New Analysis</div>
-    <div class="topnav-item" onclick="showPage('dashboard',this)">My Roadmap</div>
-    <div class="topnav-item" onclick="showPage('jobs',this)">Job Database</div>
-    <div class="topnav-item" onclick="showPage('programs',this)">Internships & Programs</div>
+  <nav id="mainNav">
+    <button class="active" onclick="go('home')">Анализ CV</button>
+    <button onclick="go('quiz')">Мини-тест</button>
+    <button onclick="go('chat')">AI Диалог</button>
+    <button onclick="go('results')">Мой профиль</button>
+    <button onclick="go('jobs')">Вакансии</button>
+    <button onclick="go('programs')">Стажировки</button>
+    <button onclick="go('manual')">Ручная оценка</button>
   </nav>
-  <div style="display:flex;align-items:center;gap:12px">
-    <span class="pill-badge" id="topBadge" style="display:none">Pharma</span>
-    <span style="font-size:13px;color:var(--muted)">MVP · No login</span>
-  </div>
 </header>
 
-<!-- UPLOAD PAGE -->
-<div class="page active" id="page-upload">
-  <div class="section-header">
-    <div class="section-eyebrow">Step 1 of 2</div>
-    <div class="section-title">Upload CV &amp; <em>Select a Job</em></div>
-    <div class="section-sub">We'll analyze the gap between your current profile and the pharma role — then generate a full career roadmap, powered by AI.</div>
+<!-- ═══ HOME: CV UPLOAD ═══ -->
+<div class="page active" id="p-home">
+
+  <div class="api-row">
+    <div class="api-status off" id="apiDot"></div>
+    <label>GEMINI_API_KEY</label>
+    <input type="password" id="apiKeyInput" placeholder="AIza..." oninput="checkApiKey()">
+    <button class="btn btn-sm btn-ghost" onclick="testApi()">Проверить</button>
+    <span class="gemini-badge"><span class="gemini-dot"></span>Gemini 1.5 Flash</span>
   </div>
 
-  <div class="flow-steps">
-    <div class="flow-step active" id="fstep1"><div class="flow-step-num">1</div><div class="flow-step-label">Upload CV</div></div>
-    <div class="flow-connector" id="fcon1"></div>
-    <div class="flow-step" id="fstep2"><div class="flow-step-num">2</div><div class="flow-step-label">Select Job</div></div>
-    <div class="flow-connector" id="fcon2"></div>
-    <div class="flow-step" id="fstep3"><div class="flow-step-num">3</div><div class="flow-step-label">AI Analysis</div></div>
+  <div class="hero">
+    <h1>Загрузи CV — получи карьерный план</h1>
+    <p>Gemini AI проанализирует ваш профиль, найдёт gap по компетенциям PhD Competence Model, подберёт вакансии и построит roadmap.</p>
+    <div class="hero-stats">
+      <span class="hero-stat-pill">📄 CV + описание</span>
+      <span class="hero-stat-pill">✨ Gemini AI анализ</span>
+      <span class="hero-stat-pill">📊 Radar-диаграмма</span>
+      <span class="hero-stat-pill">🎯 Match с вакансиями</span>
+      <span class="hero-stat-pill">💬 AI Диалог</span>
+    </div>
   </div>
 
   <div class="upload-grid">
-    <div>
-      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Your CV / Resume</div>
-      <div class="upload-zone" id="cvZone" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
-        <input type="file" id="cvFile" accept=".pdf,.txt,.doc,.docx" onchange="handleFileSelect(event)">
-        <div class="upload-icon" id="cvIcon">📄</div>
-        <div class="upload-title" id="cvTitle">Drop your CV here</div>
-        <div class="upload-sub">PDF, DOC, TXT · or click to browse</div>
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:var(--accent);"></div> Загрузить CV</div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('cvFile').click()">
+        <span class="dz-icon">📄</span>
+        <div class="dz-title">Перетащите CV сюда</div>
+        <div class="dz-sub">PDF, DOC, TXT · или нажмите для выбора</div>
+        <input type="file" id="cvFile" accept=".pdf,.doc,.docx,.txt" onchange="handleFile(this)">
       </div>
-      <div style="margin-top:16px">
-        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">Or paste CV text directly</div>
-        <textarea id="cvText" placeholder="Paste your CV / resume text here..." style="width:100%;min-height:130px;padding:12px;border:1px solid var(--border);border-radius:10px;font-family:var(--font-b);font-size:13px;line-height:1.6;color:var(--ink);background:var(--surface);outline:none;resize:vertical;" oninput="checkReady()"></textarea>
+      <div id="fileInfo" style="display:none;"></div>
+      <div style="margin-top:14px;">
+        <div style="font-size:0.82em;color:var(--text3);margin-bottom:6px;">Или вставьте текст CV:</div>
+        <textarea class="profile-input" id="cvText" rows="5" placeholder="Вставьте текст вашего CV / резюме..."></textarea>
       </div>
     </div>
 
-    <div>
-      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">Target Job</div>
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">Choose a position</div>
-          <div class="tab-toggle">
-            <button class="tab-btn active" id="tbDB" onclick="switchJobTab('db')">From Database</button>
-            <button class="tab-btn" id="tbPaste" onclick="switchJobTab('paste')">Paste JD</button>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div id="jobDBPanel">
-            <input class="job-search" type="text" placeholder="Search pharma roles..." oninput="filterJobs(this.value)">
-            <div class="job-list" id="jobList"></div>
-          </div>
-          <div id="jobPastePanel" style="display:none">
-            <textarea class="jd-paste" id="jdPaste" placeholder="Paste the full job description here..." oninput="checkReady()"></textarea>
-          </div>
-        </div>
+    <div class="card">
+      <div class="card-title"><div class="dot" style="background:var(--gemini);"></div> Опишите себя</div>
+      <textarea class="profile-input" id="profileDesc" rows="6" placeholder="Расскажите о себе свободным текстом:&#10;&#10;• Ваша специализация и опыт&#10;• Навыки и технологии&#10;• Карьерные цели в фарме&#10;• Что вам интересно (Clinical, R&D, Regulatory...)&#10;• Сильные стороны и зоны роста"></textarea>
+      <div style="margin-top:14px;">
+        <div class="card-title" style="margin-bottom:10px;"><div class="dot" style="background:var(--violet);"></div> Целевая позиция (опционально)</div>
+        <select id="targetJob" style="width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:0.92em;">
+          <option value="">— Не выбрана (AI определит лучшие match) —</option>
+        </select>
       </div>
     </div>
   </div>
 
-  <div class="action-bar">
-    <div class="action-status" id="actionStatus">Upload or paste your CV to start</div>
-    <button class="btn btn-primary" id="analyzeBtn" disabled onclick="runAnalysis()">⬡ Analyze with AI</button>
+  <div style="text-align:center;margin-bottom:28px;">
+    <button class="btn btn-gemini" id="analyzeBtn" onclick="runAnalysis()" disabled>
+      ✨ Анализировать с Gemini
+    </button>
+    <div style="font-size:0.78em;color:var(--text3);margin-top:8px;">Требуется Gemini API-ключ и CV/описание профиля</div>
+  </div>
+
+  <div id="analysisLoader" style="display:none;" class="card">
+    <div class="analysis-loader">
+      <div class="spinner"></div>
+      <div style="font-weight:600;margin-bottom:4px;">Gemini анализирует ваш профиль...</div>
+      <div style="font-size:0.85em;color:var(--text3);margin-bottom:20px;">Это займёт 10-20 секунд</div>
+      <div class="loader-steps">
+        <div class="loader-step active" id="ls1"><div class="step-dot">1</div> Извлечение навыков из CV</div>
+        <div class="loader-step" id="ls2"><div class="step-dot">2</div> Оценка компетенций по PhD Model</div>
+        <div class="loader-step" id="ls3"><div class="step-dot">3</div> Расчёт match с вакансиями</div>
+        <div class="loader-step" id="ls4"><div class="step-dot">4</div> Генерация roadmap и рекомендаций</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="aiResult" style="display:none;">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+        <div class="dot" style="background:var(--gemini);"></div>
+        <span style="font-size:1.1em;font-weight:600;">Gemini AI — анализ профиля</span>
+        <span class="gemini-badge"><span class="gemini-dot"></span>Готово</span>
+      </div>
+      <div class="ai-block" id="aiSummary"></div>
+    </div>
+    <div style="text-align:center;gap:10px;display:flex;justify-content:center;">
+      <button class="btn btn-accent" onclick="go('results')">Перейти к профилю →</button>
+      <button class="btn btn-ghost" onclick="go('chat')">💬 Продолжить диалог</button>
+    </div>
   </div>
 </div>
 
-<!-- DASHBOARD PAGE -->
-<div class="page" id="page-dashboard">
-  <div id="dashEmpty" class="empty-state">
-    <div class="empty-icon">🗺️</div>
-    <div class="empty-title">No roadmap yet</div>
-    <div class="empty-sub">Upload your CV and select a pharma job to generate your personalized career roadmap.</div>
-    <button class="btn btn-primary" onclick="showPage('upload',document.querySelector('.topnav-item'))">Start Analysis →</button>
+<!-- ═══ QUIZ ═══ -->
+<div class="page" id="p-quiz">
+  <div class="hero" id="quizHero">
+    <h1>Сценарный мини-тест</h1>
+    <p>18 ситуационных вопросов из жизни PhD и фарма. Движок построит карту компетенций по вашим ответам.</p>
+    <button class="btn btn-accent" onclick="startQuiz()">Начать тест →</button>
+    <div class="hero-stats">
+      <span class="hero-stat-pill">⏱ ~7 мин</span>
+      <span class="hero-stat-pill">📊 6 доменов</span>
+      <span class="hero-stat-pill">🎯 18 вопросов</span>
+    </div>
   </div>
-  <div id="dashContent" style="display:none">
-    <div class="dash-hero">
-      <div>
-        <div class="dash-hero-title" id="heroTitle">Your Roadmap to <em>...</em></div>
-        <div class="dash-hero-sub" id="heroSub">AI-generated · 2-year horizon · Personalized to your CV</div>
-      </div>
-      <div class="dash-hero-stats">
-        <div class="hero-stat"><div class="hero-stat-val green" id="matchPct">—</div><div class="hero-stat-label">Match Score</div></div>
-        <div class="hero-stat"><div class="hero-stat-val amber" id="gapPct">—</div><div class="hero-stat-label">Skill Gap</div></div>
-        <div class="hero-stat"><div class="hero-stat-val" id="milestoneCount">—</div><div class="hero-stat-label">Milestones</div></div>
+  <div id="quizArea" style="display:none;">
+    <div class="progress-label"><span id="qProg"></span><span id="qDom"></span></div>
+    <div class="progress-bar"><div class="progress-fill" id="pFill"></div></div>
+    <div id="qBox"></div>
+  </div>
+  <div id="quizDone" style="display:none;" class="card">
+    <div style="text-align:center;padding:24px 0;">
+      <div style="font-size:3em;margin-bottom:14px;">✅</div>
+      <h2 style="margin-bottom:10px;">Тест завершён!</h2>
+      <p style="color:var(--text2);margin-bottom:22px;">Перейдите в «Мой профиль» для анализа.</p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-accent" onclick="go('results')">Результаты →</button>
+        <button class="btn btn-ghost" onclick="go('chat')">💬 Обсудить с AI</button>
       </div>
     </div>
-    <div class="dash-grid">
-      <div>
-        <div class="card" style="margin-bottom:16px">
-          <div class="card-head"><div class="card-head-title">📊 Skill Gap Analysis</div></div>
-          <div class="card-body" id="skillGapBody"></div>
+  </div>
+</div>
+
+<!-- ═══ AI CHAT DIALOG ═══ -->
+<div class="page" id="p-chat">
+  <div class="pg-head">
+    <h2>AI Диалог с Gemini</h2>
+    <p>Задавайте вопросы о карьере в фарме, компетенциях, вакансиях и вашем профиле.</p>
+  </div>
+  <div class="card" style="margin-bottom:16px;padding:16px 20px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="font-size:0.82em;color:var(--text3);align-self:center;">Быстрые вопросы:</span>
+      <button class="fbtn" onclick="quickChat('Что мне нужно улучшить для работы в Clinical Research?')">Clinical Research</button>
+      <button class="fbtn" onclick="quickChat('Как перейти из академии в фарм-индустрию?')">Академия → Фарма</button>
+      <button class="fbtn" onclick="quickChat('Какие навыки нужны для Medical Science Liaison?')">MSL навыки</button>
+      <button class="fbtn" onclick="quickChat('Составь мне план развития на 3 месяца')">План развития</button>
+      <button class="fbtn" onclick="quickChat('Оцени мой профиль и дай рекомендации по вакансиям')">Оцени профиль</button>
+    </div>
+  </div>
+  <div class="chat-wrap">
+    <div class="chat-msgs" id="chatMsgs">
+      <div class="chat-msg ai">👋 Привет! Я Gemini AI, ваш карьерный советник в pharma/biotech. Спросите меня о карьерных путях, компетенциях, вакансиях или вашем профиле — я помогу разобраться.</div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="Задайте вопрос о карьере в фарме..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn btn-gemini btn-sm" onclick="sendChat()">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div class="page" id="p-results">
+  <div id="noRes" class="card" style="text-align:center;padding:44px;">
+    <div style="font-size:2.5em;margin-bottom:14px;">🗺️</div>
+    <h2 style="margin-bottom:10px;">Профиль ещё не создан</h2>
+    <p style="color:var(--text2);margin-bottom:22px;">Загрузите CV, пройдите мини-тест или заполните ручную оценку.</p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-accent" onclick="go('home')">Загрузить CV →</button>
+      <button class="btn btn-ghost" onclick="go('quiz')">Пройти тест</button>
+    </div>
+  </div>
+  <div id="resArea" style="display:none;">
+    <div class="tabs">
+      <button class="tab on" onclick="rtab('t-radar',this)">📊 Radar</button>
+      <button class="tab" onclick="rtab('t-bars',this)">📋 Детали</button>
+      <button class="tab" onclick="rtab('t-recs',this)">🎯 Рекомендации</button>
+      <button class="tab" onclick="rtab('t-road',this)">🗺️ Roadmap</button>
+      <button class="tab" onclick="rtab('t-cover',this)">✍️ Cover Letter</button>
+      <button class="tab" onclick="rtab('t-ai',this)">✨ AI Инсайты</button>
+    </div>
+    <div class="tp on" id="t-radar">
+      <div class="res-grid">
+        <div class="card" style="text-align:center;">
+          <div class="card-title" style="justify-content:center;"><div class="dot" style="background:var(--accent);"></div> Карта компетенций</div>
+          <div class="radar-wrap"><canvas id="radarC"></canvas></div>
         </div>
         <div class="card">
-          <div class="card-head"><div class="card-head-title">✅ Your Strengths</div></div>
-          <div class="card-body" id="strengthsBody"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><div class="card-head-title">🗺️ 2-Year Roadmap</div></div>
-        <div class="card-body">
-          <div class="timeline"><div class="tl-line"></div><div id="timelineBody"></div></div>
+          <div class="card-title"><div class="dot" style="background:var(--gemini);"></div> Scorecard</div>
+          <div id="scorecard"></div>
+          <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-outline" onclick="exportJSON()">💾 JSON</button>
+            <button class="btn btn-sm btn-ghost" onclick="go('chat')">💬 Обсудить</button>
+            <button class="btn btn-sm btn-ghost" onclick="resetAll()">🔄 Сброс</button>
+          </div>
         </div>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px">
+    <div class="tp" id="t-bars"><div class="card"><div class="card-title"><div class="dot" style="background:var(--violet);"></div> Детальные баллы</div><div id="detBars"></div></div></div>
+    <div class="tp" id="t-recs"><div class="card"><div class="card-title"><div class="dot" style="background:var(--amber);"></div> Персональные рекомендации</div><div id="recsBox"></div></div></div>
+    <div class="tp" id="t-road"><div class="card"><div class="card-title"><div class="dot" style="background:var(--accent);"></div> 30-дневный план</div><div id="roadBox"></div></div></div>
+    <div class="tp" id="t-cover"><div class="card"><div class="card-title"><div class="dot" style="background:var(--gemini);"></div> Сопроводительное письмо</div><div id="coverBox"><p style="color:var(--text3);">Доступно после AI-анализа CV с указанием целевой позиции.</p></div></div></div>
+    <div class="tp" id="t-ai">
       <div class="card">
-        <div class="card-head">
-          <div class="card-head-title">⚡ 30-Day Action Plan</div>
-          <button class="btn btn-ghost btn-sm" onclick="showToast('Plan exported!')">Export</button>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+          <div class="dot" style="background:var(--gemini);"></div>
+          <span style="font-size:1.1em;font-weight:600;">Gemini AI Инсайты</span>
+          <span class="gemini-badge"><span class="gemini-dot"></span>Персонализировано</span>
         </div>
-        <div class="card-body" id="planBody"></div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div class="card-head-title">✍️ Cover Letter Draft</div>
-          <button class="btn btn-ghost btn-sm" onclick="copyCoverLetter()">Copy</button>
+        <div id="aiInsights">
+          <div style="text-align:center;padding:32px;color:var(--text3);">
+            <div style="font-size:2em;margin-bottom:12px;">✨</div>
+            <p>Запустите анализ CV для получения персональных AI-инсайтов от Gemini.</p>
+            <button class="btn btn-gemini btn-sm" style="margin-top:16px;" onclick="generateInsights()">Сгенерировать инсайты</button>
+          </div>
         </div>
-        <div class="card-body"><div class="letter-box" id="letterBox"></div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- JOBS PAGE -->
-<div class="page" id="page-jobs">
-  <div class="section-header">
-    <div class="section-eyebrow">Pharma Job Database · Russia</div>
-    <div class="section-title">Real <em>Industry Roles</em></div>
-    <div class="section-sub">110 curated vacancies from Russian pharma market (hh.ru). Grouped by career track — click any role to run a full AI analysis.</div>
+<!-- ═══ JOBS ═══ -->
+<div class="page" id="p-jobs">
+  <div class="pg-head">
+    <h2>Pharma Job Database</h2>
+    <p>Вакансии фарма-индустрии России. Match-score рассчитывается по вашему профилю компетенций.</p>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="jobCategoryFilter">
-    <button class="filter-btn active" onclick="filterJobCategory('all',this)">All Roles</button>
-    <button class="filter-btn" onclick="filterJobCategory('Clinical',this)">🏥 Clinical</button>
-    <button class="filter-btn" onclick="filterJobCategory('Regulatory',this)">📋 Regulatory</button>
-    <button class="filter-btn" onclick="filterJobCategory('Commercial',this)">💼 Commercial</button>
-    <button class="filter-btn" onclick="filterJobCategory('Academic',this)">🎓 Academic</button>
-    <button class="filter-btn" onclick="filterJobCategory('Management',this)">⚙️ Management</button>
-    <button class="filter-btn" onclick="filterJobCategory('Logistics',this)">📦 Logistics</button>
-  </div>
-  <div class="jobs-grid" id="jobsGrid"></div>
+  <div class="filters" id="jFilters"></div>
+  <div class="jobs-grid" id="jGrid"></div>
 </div>
 
-<!-- PROGRAMS PAGE -->
-<div class="page" id="page-programs">
-  <div class="section-header">
-    <div class="section-eyebrow">Internships & Training Programs · 38 opportunities</div>
-    <div class="section-title">Step Into <em>Industry</em></div>
-    <div class="section-sub">Curated internships, traineeships, and summer schools in pharma/biotech — Russia, Europe, USA. Filter by region or type.</div>
+<!-- ═══ PROGRAMS ═══ -->
+<div class="page" id="p-programs">
+  <div class="pg-head">
+    <h2>Стажировки и программы</h2>
+    <p>Internships, traineeships, летние школы — Россия, Европа, США.</p>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
-    <button class="filter-btn active" onclick="filterPrograms('all',this)">All</button>
-    <button class="filter-btn" onclick="filterPrograms('Russia',this)">🇷🇺 Russia</button>
-    <button class="filter-btn" onclick="filterPrograms('Europe',this)">🇪🇺 Europe</button>
-    <button class="filter-btn" onclick="filterPrograms('USA/Canada',this)">🇺🇸 USA/Canada</button>
-    <button class="filter-btn" onclick="filterPrograms('internship',this)">Internship</button>
-    <button class="filter-btn" onclick="filterPrograms('summer school',this)">Summer School</button>
-    <button class="filter-btn" onclick="filterPrograms('score5',this)">⭐ Top Picks</button>
+  <div class="filters" id="pFilters"></div>
+  <div class="jobs-grid" id="pGrid"></div>
+</div>
+
+<!-- ═══ MANUAL ═══ -->
+<div class="page" id="p-manual">
+  <div class="card">
+    <div class="card-title"><div class="dot" style="background:var(--violet);"></div> Ручная самооценка (PhD Competence Model)</div>
+    <p style="color:var(--text2);margin-bottom:22px;">Оцените каждую компетенцию от 1 до 10. Результаты появятся в «Мой профиль».</p>
+    <div id="manForm"></div>
+    <div style="margin-top:22px;text-align:center;">
+      <button class="btn btn-accent" onclick="saveManual()">💾 Сохранить и перейти к профилю</button>
+    </div>
   </div>
-  <div class="programs-grid" id="programsGrid"></div>
+</div>
+
 </div>
 
 <script>
-const JOBS_DB = [{"id": 1, "category": "Clinical", "company": "Аптечная сеть 36,6, АПТЕКИ ВАША № 1, Ozon fresh", "title": "Pharmacist / Провизор", "subtitle": "Retail & Clinical Pharmacy", "location": "Москва, Красный строитель, Пражская, Улица Академи", "salary": "от 90 000 до 125 000 ₽ за месяц до ", "experience": "не требуется", "type": "Full-time", "required": ["Pharmaceutical Education", "Drug Counseling", "GMP Knowledge", "Prescription Handling"], "nice": ["Management", "Team Leadership", "CRM"], "description": "Role: Pharmacist / Провизор\nOrganization examples: Аптечная сеть 36,6, АПТЕКИ ВАША № 1, Ozon fresh\nLocation: Москва, Красный строитель, Пражская, Улица Академика Янгеля,\nSalary: от 90 000 до 125 000 ₽ за месяц до \nExperience required: не требуется\n\nJob Description:\nМы предлагаем: Плюс к заработной плате приветственный бонус за трудоустройство 50 000 руб., * Бонус по акции «Приведи друга» выплата до 30 000 рублей за трудоустроенного, * Бесплатное проживание в корпоративных квартирах или компенсация аренды жилья на год, * Обучение профессии (для кандидатов с медицинским образованием). Обязанности: Консультирование покупателей по товарам аптечного ассортимента, Работа с кассовым аппаратом. У нас есть всё для комфортной работы: Выбор аптеки в шаговой доступности, Удобная эргономичная униформа, Удобные графики – 2/2, 5/2 средняя смена, 1/3, ночные смены, вахт", "url": "https://hh.ru/vacancy/131071192?query=%D1%84%D0%B0%D1%80%D0%BC%D0%B0%D1%86%D0%B5%D0%B2%D1%82&hhtmFrom=vacancy_search_list"}, {"id": 2, "category": "Regulatory", "company": "ФГБУ НЦЭСМП Минздрава России, ООО АЛВИЛС", "title": "Regulatory Affairs Specialist", "subtitle": "Drug Registration & Compliance", "location": "Москва, Дегтярный переулок, 5с2", "salary": "от 83 000 ₽ за месяц на руки", "experience": "1–3 года", "type": "Full-time", "required": ["Drug Registration", "CTD/NDA Documentation", "Regulatory Strategy", "Attention to Detail"], "nice": ["GCP/GMP", "Legal Knowledge", "English"], "description": "Role: Regulatory Affairs Specialist\nOrganization examples: ФГБУ НЦЭСМП Минздрава России, ООО АЛВИЛС\nLocation: Москва, Дегтярный переулок, 5с2\nSalary: от 83 000 ₽ за месяц на руки\nExperience required: 1–3 года\n\nJob Description:\nФГБУ «НЦЭСМП» Минздрава России проводит экспертизу всех российских и зарубежных лекарственных средств до их поступления в обращение в России (≈ 10 000 экспертиз ежегодно). Также в Центре осуществляются научная и образовательная деятельности, разработка фармакопейных статей, аттестация фармакопейных стандартных образцов и другие социально значимые работы в сфере здравоохранения. Команда Центра - высококвалифицированные специалисты в области медицины, фармакологии, токсикологии, химии, биологии и других наук. Общая численность сотрудников – более 1000 человек. В настоящее время мы находимся в по", "url": "https://hh.ru/vacancy/129374125?query=%D1%84%D0%B0%D1%80%D0%BC%D0%B0%D0%BA%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%8F+%D0%BD%D0%B0%D1%83%D0%BA%D0%B0&hhtmFrom=vacancy_search_list"}, {"id": 3, "category": "Commercial", "company": "ООО НАРТИ, SOLOPHARM, АО Фирма ЕВРОСЕРВИС", "title": "Medical Sales / KAM", "subtitle": "Pharma Sales & Key Accounts", "location": "Нижний Новгород, Юбилейная улица, 2а", "salary": "от 120 000 ₽ за месяц на руки", "experience": "1–3 года", "type": "Full-time", "required": ["Sales Skills", "Medical Knowledge", "CRM Tools", "Negotiation"], "nice": ["KAM Experience", "Pharma Market Knowledge"], "description": "Role: Medical Sales / KAM\nOrganization examples: ООО НАРТИ, SOLOPHARM, АО Фирма ЕВРОСЕРВИС\nLocation: Нижний Новгород, Юбилейная улица, 2а\nSalary: от 120 000 ₽ за месяц на руки\nExperience required: 1–3 года\n\nJob Description:\nНа базу снабжения товарами технического назначения требуется менеджер по продажам Описание компании: Компания «НАРТИ» (Нижегородские Асбестовые РезиноТехнические Изделия) является поставщиком широкого ассортимента промышленной продукции от лучших отечественных и зарубежных производителей Нашими услугами пользуются компании, занятые в сфере фармакологии, машиностроения, химической и пищевой промышленности, энергетики, водоснабжения, сельского хозяйства, нефте-газопереработки Компания на рынке уже 30 лет Коммерческий отдел компании не делает предложений клиентам - коммерческий отдел продает На к", "url": "https://nn.hh.ru/vacancy/130492796?query=%D0%A4%D0%B0%D1%80%D0%BC%D0%B0%D0%BA%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%8F&hhtmFrom=vacancy_search_list"}, {"id": 4, "category": "Academic", "company": "ФГАОУ ВО Первый МГМУ им. И.М.Сеченова Минздрава России (Сеченовский Университет)", "title": "Academic Lecturer / Docent", "subtitle": "Pharmacology & University Teaching", "location": "Москва, Озёрная, Тропарево, Университет дружбы нар", "salary": "от 113 088 до 126 659 ₽ за месяц до", "experience": "не требуется", "type": "Full-time", "required": ["PhD / Candidate of Sciences", "Pharmacology", "Teaching Skills", "Research Publications"], "nice": ["Grant Writing", "Lab Skills", "English"], "description": "Role: Academic Lecturer / Docent\nOrganization examples: ФГАОУ ВО Первый МГМУ им. И.М.Сеченова Минздрава России (Сеченовский Университет)\nLocation: Москва, Озёрная, Тропарево, Университет дружбы народов, прос\nSalary: от 113 088 до 126 659 ₽ за месяц до\nExperience required: не требуется\n\nJob Description:\nСеченовский Университет - ведущий медицинский университет России, занимает первое место среди 20 лучших университетов в сфере медицины (рейтинг агентства RAEX), клинический центр Университета входит в пятерку наиболее привлекательных работодателей России (компания Universum). Сегодня у нас работает 8000 сотрудников, учится более 18000 студентов. Сеченовский Университет является участником Программы «Приоритет 2030». Мы ищем кандидата на должность Ассистента кафедры фармакологии Института Фармации им. А.П. Нелюбина: В Ваши обязанности будет входить: Учебная (преподавательская) деятельность, Нау", "url": "https://hh.ru/vacancy/125444192?query=%D1%84%D0%B0%D1%80%D0%BC%D0%B0%D0%BA%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%8F+%D0%BD%D0%B0%D1%83%D0%BA%D0%B0&hhtmFrom=vacancy_search_list"}, {"id": 5, "category": "Management", "company": "ООО Фармсервис, ДЖЕЙКЕТ РАБОТА", "title": "Pharmacy Head / Manager", "subtitle": "Pharmacy Operations & Leadership", "location": "Нижний Новгород, Горьковская, улица Владимира Высо", "salary": "от 95 000 ₽ за месяц до вычета нало", "experience": "1–3 года", "type": "Full-time", "required": ["Pharmacy License", "Team Management", "Inventory Control", "3+ Years Experience"], "nice": ["P&L Responsibility", "Staff Training"], "description": "Role: Pharmacy Head / Manager\nOrganization examples: ООО Фармсервис, ДЖЕЙКЕТ РАБОТА\nLocation: Нижний Новгород, Горьковская, улица Владимира Высоцкого, 1\nSalary: от 95 000 ₽ за месяц до вычета нало\nExperience required: 1–3 года\n\nJob Description:\nВ связи с открытием новой аптеки, приглашаем на работу Заведующего аптекой. Наша компания – один из крупнейших фарм дистрибьюторов.Мы предлагаем работу с широким ассортиментом препаратов, медицинских изделий и ортопедии.Мы отказались от планов продаж, штрафов и навязывания услуг.С нами вы точно будете гордиться совей профессией и наслаждаться работой! Обязанности: Знание и соблюдение НД в своей компетенции, прием, маркировка, выкладка аптечного товара соблюдение санитарного режима и фармацевтического порядка в аптеке, Контроль работы и качества обслуживания первостольников в подчинении, Выполн", "url": "https://nn.hh.ru/vacancy/130429985?query=%D0%A4%D0%B0%D1%80%D0%BC%D0%B0%D0%BA%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D1%8F&hhtmFrom=vacancy_search_list"}, {"id": 6, "category": "Logistics", "company": "Ozon fresh", "title": "Warehouse Pharmacist", "subtitle": "Pharmaceutical Storage & Logistics", "location": "Москва, Волгоградский проспект, Дубровка, Дубровка", "salary": "от 98 000 ₽ за месяц до вычета нало", "experience": "1–3 года", "type": "Full-time", "required": ["Pharmaceutical Education", "GMP Storage Rules", "Inventory Management", "Attention to Detail"], "nice": ["WMS Software", "Cold Chain"], "description": "Role: Warehouse Pharmacist\nOrganization examples: Ozon fresh\nLocation: Москва, Волгоградский проспект, Дубровка, Дубровка, Угрешска\nSalary: от 98 000 ₽ за месяц до вычета нало\nExperience required: 1–3 года\n\nJob Description:\nМы предлагаем: Оформление по ТК РФ с полным социальным пакетом, График работы - 5/2 (выходные: суббота, воскресенье) ДМС, скидки и привилегии от компаний-партнёров для наших сотрудников, бесплатные консультации юристов, психологов и нутрициологов, Проведение медосмотров за счет компании. Вам предстоит: прием и отпуск товара от поставщиков, организация правильного хранения (ротация, адресное хранение), фармацевтический порядок в соответствии со всеми стандартами и требованиями. Мы ожидаем: Среднее специальное / Высшее фармацевтическое образование (фармацевт или провизор) и сертификат по специал", "url": "https://hh.ru/vacancy/131040195?query=%D1%84%D0%B0%D1%80%D0%BC%D0%B0%D1%86%D0%B5%D0%B2%D1%82&hhtmFrom=vacancy_search_list"}];
+// ══════════════════════════════════════════════════════════
+// COMPETENCY MODEL
+// ══════════════════════════════════════════════════════════
+const compData={
+  "Research skills and knowledge":[
+    {name:"Research knowledge",items:["Глубокие знания в своей области и широкое понимание смежных направлений."]},
+    {name:"Research skills",items:["Формулирование научных вопросов и гипотез.","Дизайн экспериментов, сбор и анализ данных.","Интерпретация результатов и критический анализ литературы."]},
+    {name:"Academic writing",items:["Написание научных рукописей с правильной структурой и стилем."]}
+  ],
+  "Personal effectiveness":[
+    {name:"Resilience",items:["Эффективная работа в условиях стресса и неопределённости."]},
+    {name:"Self-awareness",items:["Критический анализ своего поведения, открытость к feedback."]},
+    {name:"Work-life balance",items:["Баланс между работой и личной жизнью."]},
+    {name:"Inquisitiveness",items:["Любопытство и стремление к познанию."]},
+    {name:"Initiative",items:["Проактивное поведение, поиск возможностей."]}
+  ],
+  "Professional development":[
+    {name:"Adaptivity",items:["Адаптация к изменениям и новым условиям."]},
+    {name:"Ambition",items:["Стремление к развитию и расширению ответственности."]},
+    {name:"Creativity",items:["Генерация идей и инновационные решения."]},
+    {name:"Entrepreneurship",items:["Поиск коммерческих возможностей, готовность к рискам."]}
+  ],
+  "Leadership & Management":[
+    {name:"Collaboration",items:["Вклад в общий результат за рамками своей задачи."]},
+    {name:"Coaching",items:["Помощь коллегам в развитии через обратную связь."]},
+    {name:"Delegation",items:["Эффективное распределение задач."]},
+    {name:"Decisiveness",items:["Ответственное и своевременное принятие решений."]},
+    {name:"Negotiation",items:["Нахождение общих целей и достижение договорённостей."]},
+    {name:"Vision",items:["Формирование долгосрочных целей, big picture."]}
+  ],
+  "Communication":[
+    {name:"Team communication",items:["Эффективное общение с людьми разного бэкграунда."]},
+    {name:"Networking",items:["Развитие профессиональных контактов."]},
+    {name:"Public communication",items:["Популяризация исследований для широкой аудитории."]},
+    {name:"Academic communication",items:["Научная коммуникация для академической среды."]}
+  ],
+  "Teaching":[
+    {name:"Learning & teaching",items:["Постановка целей обучения, использование обратной связи."]},
+    {name:"Course design",items:["Разработка учебных модулей и эффективное использование технологий."]},
+    {name:"Supervising",items:["Руководство бакалаврскими и магистерскими работами."]},
+    {name:"Professional educator",items:["Рефлексия преподавательской практики."]}
+  ]
+};
+const groups=Object.keys(compData);
+const gColors={"Research skills and knowledge":"#00e8a2","Personal effectiveness":"#3b9eff","Professional development":"#a374ff","Leadership & Management":"#ffb84d","Communication":"#ff6b9d","Teaching":"#22d3ee"};
 
-const PROGRAMS_DB = [{"id": "P01", "name": "Start Your Bayer Life Internship Program", "org": "Bayer (Russia & CIS)", "region": "Russia", "country": "Russia (and CIS)", "city": "Multiple", "type": "internship", "field": "Pharma/healthcare business functions + pharma-related roles", "who": "Students & recent graduates", "lang": "Russian", "deadline": "See website", "funding": "not found,not found,not found", "intl": "unclear", "status": "recurring", "link": "https://www.bayer.ru/ru/internship-program", "score": 4, "notes": "Good for pharma entry roles; deadlines not published"}, {"id": "P02", "name": "GEROPHARM Paid Internship (g-START) Summer 2026", "org": "GEROPHARM", "region": "Russia", "country": "Russia", "city": "Multiple (incl. St Petersburg)", "type": "internship", "field": "Pharma industry + R&D/quality/PV pathways", "who": "Students & young specialists", "lang": "Russian", "deadline": "See website", "funding": "1 Jul–31 Aug 2026,Apply by 30 Apr (summer intake),Paid (expl", "intl": "no", "status": "open", "link": "https://geropharm-career.ru/", "score": 5, "notes": "High relevance to pharma + PV/QA tracks"}, {"id": "P03", "name": "GEROPHARM Pharmacovigilance Case Championship (internship selection track)", "org": "GEROPHARM", "region": "Russia", "country": "Russia", "city": "St Petersburg (final in-person)", "type": "training/internship", "field": "Pharmacovigilance (PVMS case processing) + selection", "who": "Students", "lang": "Russian", "deadline": "See website", "funding": "not found,not found,not found", "intl": "no", "status": "recurring", "link": "https://geropharm-career.ru/championship", "score": 5, "notes": "Useful as PV track entry; year is not explicit on stages"}, {"id": "P04", "name": "Solopharm Internship Program", "org": "Solopharm", "region": "Russia", "country": "Russia", "city": "St Petersburg", "type": "internship", "field": "Pharma company internships (incl. R&D directions)", "who": "Students & young specialists", "lang": "Russian", "deadline": "See website", "funding": "not found,not found,not found", "intl": "unclear", "status": "recurring", "link": "https://solopharm.com/career/internship", "score": 4, "notes": "Strong for manufacturing/R&D exposure; deadlines not published"}, {"id": "P05", "name": "UNIPHARM Internship “How to become a Medical Representative?”", "org": "UNIPHARM", "region": "Russia", "country": "Russia", "city": "not found", "type": "training/internship", "field": "Medical affairs / commercial pharma (med rep)", "who": "BSc/MSc graduates (medicine/pharmacy etc.)", "lang": "Russian", "deadline": "See website", "funding": "not found,not found,not found", "intl": "unclear", "status": "recurring", "link": "https://www.unipharm.ru/internship/", "score": 4, "notes": "Good for entry into field-based pharma roles"}, {"id": "P06", "name": "Petrovax Internships for Young Specialists", "org": "Petrovax Pharm", "region": "Russia", "country": "Russia", "city": "not found", "type": "internship", "field": "Pharma/biotech (chemistry/biology/pharmacy/medicine + others", "who": "Graduates & students", "lang": "Russian", "deadline": "See website", "funding": "not found,not found,not found", "intl": "unclear", "status": "recurring", "link": "https://career.petrovax.ru/internships/", "score": 4, "notes": "Good general entry point; specific intake dates not published"}, {"id": "P07", "name": "Binnopharm Group Summer Internships (Alium/“Sintez” plants)", "org": "Binnopharm Group", "region": "Russia", "country": "Russia", "city": "Obolensk + Kurgan (and others)", "type": "internship", "field": "Pharma manufacturing + GMP + quality exposure", "who": "Students", "lang": "Russian", "deadline": "See website", "funding": "Summer 2025,not found,unclear", "intl": "no", "status": "active", "link": "https://www.binnopharmgroup.ru/press/news/2025/b%D0%B8nnofarm-grupp-prodolzhaet-razvivat-format-letnikh-stazhirovok/", "score": 4, "notes": "Great for GMP/manufacturing; application route not fully specified in article"}, {"id": "P08", "name": "Sechenov University × AstraZeneca Student Internship Program (pharmacy)", "org": "Sechenov University with AstraZeneca", "region": "Russia", "country": "Russia", "city": "Moscow", "type": "internship", "field": "Pharma career start (industry internship for pharmacy studen", "who": "Pharmacy students", "lang": "Russian", "deadline": "See website", "funding": "launched 2025,not found,not found", "intl": "unclear", "status": "active", "link": "https://www.sechenov.ru/univers/structure/institute/institut-farmatsii/news/376626/", "score": 4, "notes": "Program details/selection timeline not fully published on the news page"}, {"id": "P09", "name": "EMA Traineeships Programme (Oct 2025–Jul 2026)", "org": "European Medicines Agency (EMA)", "region": "Europe", "country": "Netherlands", "city": "Amsterdam", "type": "traineeship", "field": "Medicines regulation + biomedical/pharmacy tracks", "who": "Recent graduates/students (per eligibility)", "lang": "English", "deadline": "See website", "funding": "1 Oct 2025–31 Jul 2026,6 May 2025 (for 2025–2026 intake),Sti", "intl": "unclear (EU/EEA focus)", "status": "active", "link": "https://agencies-network.europa.eu/ema-traineeships_en", "score": 5, "notes": "High-value regulatory entry; nationality constraints apply"}, {"id": "P11", "name": "ULLA Summer School 2026 “From Target to Therapy”", "org": "ULLA / University of Copenhagen (announcement)", "region": "Switzerland", "country": "Switzerland", "city": "Geneva", "type": "summer school", "field": "Drug discovery & development (PhD-level course)", "who": "PhD students (partner institutions; limited seats)", "lang": "English", "deadline": "See website", "funding": "27 Jun–4 Jul 2026,Pre-registration before 1 Mar 2026,“No cou", "intl": "unclear", "status": "open", "link": "https://dra.ku.dk/news/2026/ullasummerschool/", "score": 5, "notes": "Excellent for drug development knowledge; access depends on institution quotas"}, {"id": "P12", "name": "DRA Summer School 2026", "org": "Drug Research Academy (University of Copenhagen)", "region": "Europe", "country": "Denmark", "city": "Copenhagen", "type": "summer school", "field": "Drug research (PhD presentations/network)", "who": "PhD students (DRA context)", "lang": "English/unclear", "deadline": "See website", "funding": "26–27 Aug 2026,not found,not found", "intl": "unclear", "status": "open", "link": "https://dra.ku.dk/news/2026/drasummerschool/", "score": 4, "notes": "More academic; useful for R&D networking"}, {"id": "P13", "name": "SSPA 2026 “Summer School on Pharmaceutical Analysis”", "org": "SSPA / University of Bologna (host)", "region": "Europe", "country": "Italy", "city": "Rimini", "type": "summer school", "field": "Pharmaceutical analysis in early drug discovery + AI", "who": "Students/PhD/early-career (capacity limited)", "lang": "English", "deadline": "See website", "funding": "21–23 Sep 2026,Early price deadline 12 Jun 2026 (and other c", "intl": "yes", "status": "open", "link": "https://www.sspaweb.com/", "score": 5, "notes": "High relevance for analytical/drug discovery skills at low cost"}, {"id": "P14", "name": "ESCMID Summer School 2026", "org": "European Society of Clinical Microbiology and Infe", "region": "Europe", "country": "Hungary", "city": "Budapest", "type": "summer school", "field": "Clinical microbiology & infectious diseases (pharmacists eli", "who": "Pharmacists + MD/PhD etc.", "lang": "English/unclear", "deadline": "See website", "funding": "July 2026,not found,Fee not found", "intl": "yes", "status": "open", "link": "https://www.escmid.org/education/summer-school/", "score": 4, "notes": "Relevant for antimicrobial stewardship/ID pharmacy track"}, {"id": "P15", "name": "Uppsala Monitoring Centre Self-Paced Pharmacovigilance Courses", "org": "Uppsala Monitoring Centre (UMC)", "region": "Europe", "country": "Sweden", "city": "Uppsala (online delivery)", "type": "training", "field": "Pharmacovigilance (case mgmt, signal detection, reporting)", "who": "PV center staff/public sector/academia (varies)", "lang": "English", "deadline": "See website", "funding": "not found,not found,Free for non-profit orgs (as stated)", "intl": "yes/unclear", "status": "recurring", "link": "https://aboutlinkkorea2.who-umc.org/education-and-training/self-paced-online-courses/", "score": 4, "notes": "Fast upskilling route for PV; not a placement/internship"}, {"id": "P17", "name": "AstraZeneca Work Placement Student Programme (Sweden) 2026 intake", "org": "AstraZeneca", "region": "Europe", "country": "Sweden", "city": "Gothenburg", "type": "internship/work placement", "field": "Drug discovery R&D placement (12 months)", "who": "Students", "lang": "English/unclear", "deadline": "See website", "funding": "2026 placement (12 months),Dec–31 Jan 2026 (recruitment wind", "intl": "unclear", "status": "open", "link": "https://careers.astrazeneca.com/work-placement-students-se", "score": 5, "notes": "One of the most “true R&D” student placements in Europe"}, {"id": "P18", "name": "AstraZeneca Summer Internships (UK)", "org": "AstraZeneca", "region": "Europe", "country": "United Kingdom", "city": "Multiple sites (Cambridge/Macclesfield/etc.)", "type": "internship", "field": "Drug development + clinical pharmacology + regulatory + phar", "who": "Undergrad/MSc/PhD students", "lang": "English", "deadline": "See website", "funding": "May–Sep (yearly cycle),Jan applications open (annual cycle),", "intl": "no (UK right-to-work required)", "status": "recurring", "link": "https://careers.astrazeneca.com/early-careers-internships/", "score": 5, "notes": "Strong pharma-tech/reg/clin pharm exposure; UK work authorization required"}, {"id": "P19", "name": "AstraZeneca “Working in Science 2026” (Regulatory Affairs Intern", "org": "Warsaw)", "region": "AstraZeneca", "country": "AstraZeneca", "city": "Poland,Warsaw", "type": "internship", "field": "Regulatory affairs + clinical research operations context", "who": "Last-year students & recent grads", "lang": "English/unclear", "deadline": "See website", "funding": "Starts July 2026,not found (posting dated Mar 1, 2026),Paid/", "intl": "unclear", "status": "open", "link": "https://job-search.astrazeneca.fr/emploi/varsovie/regulatory-affairs-intern-working-in-science-2026-internship-program/11070/92276461216", "score": 5, "notes": "Highly relevant for regulatory entry"}, {"id": "P20", "name": "Roche Internship Program", "org": "Roche", "region": "USA/Canada", "country": "United States (program page global)", "city": "Various (company-specific)", "type": "internship", "field": "Pharma/diagnostics incl. Regulatory & Quality & R&D", "who": "Students", "lang": "English", "deadline": "See website", "funding": "Typically summer; hiring decisions by March,Applications ope", "intl": "unclear", "status": "recurring", "link": "https://careers.roche.com/global/en/roche-internship-program", "score": 5, "notes": "High brand value; exact roles vary by site"}, {"id": "P21", "name": "Novartis Next Generation Scientist (Basel)", "org": "Novartis", "region": "Switzerland", "country": "Switzerland", "city": "Basel", "type": "internship/research program", "field": "Research internship + leadership development (LMIC scientist", "who": "Scientists from low-/middle-income countries", "lang": "English", "deadline": "See website", "funding": "not found,Oct–Nov (recruitment calendar),Scholarship/stipend", "intl": "yes", "status": "recurring", "link": "https://www.novartis.com/careers/early-careers/students", "score": 4, "notes": "High-quality research exposure; targeted eligibility"}, {"id": "P22", "name": "Sanofi LEAP Internship (Türkiye)", "org": "Sanofi", "region": "Turkey", "country": "Turkey", "city": "Lüleburgaz (example posting)", "type": "internship", "field": "Long-term internship inside pharma company,Students/early ta", "who": "Job post includes explicit deadline Jan 31", "lang": "Turkish/English (unclear)", "deadline": "See website", "funding": "not found,31 Jan 2026 (example posting),Paid/unclear", "intl": "unclear", "status": "open", "link": "https://jobs.sanofi.cn/%E5%B7%A5%E4%BD%9C/luleburgaz/leap-sanofi-turkiye-internship-experience-luleburgaz/3036/18711334848", "score": 4, "notes": "Use Sanofi job search for other LEAP locations/roles"}, {"id": "P24", "name": "Pfizer Futures (US Early Careers)", "org": "Pfizer", "region": "USA/Canada", "country": "United States", "city": "Multiple US sites", "type": "internship", "field": "Pharma industry internship (undergrads)", "who": "Undergraduate students (US)", "lang": "English", "deadline": "See website", "funding": "not found,Oct 1–31, 2025 (for 2026 cycle),Paid/unclear", "intl": "unclear", "status": "open", "link": "https://www.pfizer.com/en/about/careers/early-careers", "score": 5, "notes": "Clear timeline; strong for entry-level US candidates"}, {"id": "P25", "name": "NIH Summer Internship Program (SIP) 2026", "org": "NIH (OITE)", "region": "USA/Canada", "country": "United States", "city": "Multiple campuses (e.g., Bethesda)", "type": "research internship", "field": "Biomedical research incl. pharmaceutical sciences", "who": "Students (HS/UG/grad/professional)", "lang": "English", "deadline": "See website", "funding": "Summer 2026,Closes Feb 18, 2026 (opens Dec 8, 2025),Paid (st", "intl": "no (US citizen/PR required)", "status": "open", "link": "https://www.training.nih.gov/research-training/hs", "score": 4, "notes": "Strong research track; nationality restrictions"}, {"id": "P26", "name": "NIH Clinical Center Summer Internship Program (CC SIP) 2026", "org": "NIH Clinical Center", "region": "USA/Canada", "country": "United States", "city": "Bethesda, MD", "type": "research internship", "field": "Clinical center research areas incl. Pharmacy", "who": "Students (18+; US/PR)", "lang": "English", "deadline": "See website", "funding": "Jun 15–Aug 7, 2026,Closes Feb 18, 2026,Paid internship (expl", "intl": "no (US/PR required)", "status": "open", "link": "https://www.cc.nih.gov/training/students/summer-internships", "score": 4, "notes": "Good for clinically oriented research exposure incl. pharmacy"}, {"id": "P28", "name": "ASHP Summer Internship (virtual) 2026", "org": "ASHP", "region": "USA/Canada", "country": "United States", "city": "Virtual", "type": "internship", "field": "Association management + policy/drug information exposure", "who": "PharmD students", "lang": "English", "deadline": "See website", "funding": "not found,Feb 28, 2026,Unpaid (explicit)", "intl": "no/unclear", "status": "open", "link": "https://www.ashp.org/pharmacy-student/ashp-summer-internship", "score": 4, "notes": "Strong networking for hospital pharmacy leadership track"}, {"id": "P29", "name": "FDA Pathways (Students & Recent Graduates)", "org": "FDA", "region": "USA/Canada", "country": "United States", "city": "Multiple (federal)", "type": "internship/early career", "field": "Federal work in drug/biologics/device regulation (varies by ", "who": "Students & recent graduates", "lang": "English", "deadline": "See website", "funding": "not found,not found,Paid federal roles", "intl": "unclear", "status": "recurring", "link": "https://www.fda.gov/about-fda/jobs-and-training-fda/pathways-students-and-recent-graduates-fda", "score": 4, "notes": "Filter USAJOBS by “Student Trainee” + FDA"}, {"id": "P30", "name": "FDA Pharmacy Student Experiential Program (PSEP)", "org": "FDA", "region": "USA/Canada", "country": "United States", "city": "Silver Spring, MD (and others)", "type": "training/rotation", "field": "Regulatory pharmacy APPE rotations (drugs/biologics/devices)", "who": "Pharmacy students (APPE-eligible)", "lang": "English", "deadline": "See website", "funding": "Year-round when open,Not accepting 2026–2027 at this time,Un", "intl": "no (US citizenship required)", "status": "upcoming", "link": "https://www.fda.gov/about-fda/fda-pharmacy-student-experiential-program/how-apply", "score": 5, "notes": "Great fit for regulatory pharmacy; watch for reopening notice"}, {"id": "P31", "name": "ORISE Research Participation Programs at FDA (general portal)", "org": "ORISE + FDA", "region": "USA/Canada", "country": "United States", "city": "Multiple FDA sites", "type": "internship/fellowship", "field": "Regulatory science / drug, biologics, toxicology projects", "who": "Students + postgrads + faculty (varies)", "lang": "English", "deadline": "See website", "funding": "rolling,rolling,Stipend support described; may include trave", "intl": "yes (depends on project/visa rules)", "status": "recurring", "link": "https://orise.orau.gov/fda/", "score": 4, "notes": "Use Zintellect listings for specific deadlines/projects"}, {"id": "P32", "name": "FDA–ORISE CDER Developmental Safety Fellowship (example 2026 posting)", "org": "ORISE + FDA CDER", "region": "USA/Canada", "country": "United States", "city": "Silver Spring, MD", "type": "fellowship", "field": "Clinical pharmacology / safety / translational sciences (exa", "who": "Postgrads/qualified candidates (per posting)", "lang": "English", "deadline": "See website", "funding": "not found,Apr 30, 2026,Stipend support (typical ORISE)", "intl": "unclear", "status": "open", "link": "https://www.zintellect.com/Opportunity/Details/FDA-CDER-2026-0006", "score": 5, "notes": "Representative of many CDER–ORISE opportunities (search by “FDA-CDER-2026”)"}, {"id": "P33", "name": "FDA–ORISE CDER Clinical Research Fellowship (example 2026 posting)", "org": "ORISE + FDA CDER", "region": "USA/Canada", "country": "United States", "city": "not found", "type": "fellowship", "field": "Clinical research / drug evaluation (example)", "who": "Postgrads/qualified candidates (per posting)", "lang": "English", "deadline": "See website", "funding": "not found,Apr 30, 2026,Stipend support (typical ORISE)", "intl": "unclear", "status": "open", "link": "https://www.zintellect.com/Opportunity/Details/FDA-CDER-2026-0023", "score": 4, "notes": "Use as pathway into regulatory science and clinical research review"}, {"id": "P34", "name": "Johns Hopkins Pharmacy Summer Internship Program", "org": "Johns Hopkins Medicine", "region": "USA/Canada", "country": "United States", "city": "Baltimore, MD", "type": "internship", "field": "Health-system pharmacy practice (hospital)", "who": "Pharmacy students", "lang": "English", "deadline": "See website", "funding": "not found,not found,Paid/unclear", "intl": "unclear", "status": "recurring", "link": "https://www.hopkinsmedicine.org/pharmacy/internship", "score": 5, "notes": "Strong hospital pharmacy exposure; confirm current-year application timeline via hospital contact"}, {"id": "P35", "name": "Cleveland Clinic Pharmacy Internships (longitudinal)", "org": "Cleveland Clinic", "region": "USA/Canada", "country": "United States", "city": "Cleveland, OH", "type": "internship", "field": "Inpatient operations + clinical rotations over multi-year tr", "who": "Pharmacy students", "lang": "English", "deadline": "See website", "funding": "May–Aug summer block described,not found,Paid (explicit)", "intl": "unclear", "status": "recurring", "link": "https://my.clevelandclinic.org/departments/pharmacy/education/internships", "score": 5, "notes": "High-quality health-system internship; deadlines not found on excerpt"}, {"id": "P36", "name": "Duke University Hospital Clinical Pharmacy Internship Program", "org": "Duke University Hospital", "region": "USA/Canada", "country": "United States", "city": "Durham, NC", "type": "internship", "field": "Acute care clinical pharmacy practice", "who": "Pharmacy students", "lang": "English", "deadline": "See website", "funding": "not found,not found,not found", "intl": "unclear", "status": "recurring", "link": "https://pharmacy.duke.edu/internships/clinical-intern-program", "score": 5, "notes": "Excellent clinical track; confirm annual intake timing directly"}, {"id": "P40", "name": "Amgen Scholars Asia Program 2026 (NUS)", "org": "National University of Singapore (NUS)", "region": "Singapore", "country": "Singapore", "city": "Singapore", "type": "research internship", "field": "Biomedical/biotech research (basic & translational)", "who": "Undergrads in Asia", "lang": "English", "deadline": "See website", "funding": "Summer 2026 (8 weeks),Application closed Feb 1, 2026 (noted)", "intl": "yes (Asia-region eligible)", "status": "active", "link": "https://www.dbs.nus.edu.sg/outreach/amgen-scholars-program/", "score": 4, "notes": "Excellent for R&D/biotech pathway; regional eligibility applies"}, {"id": "P42", "name": "Astana Medical University School of Pharmacy Summer School 2025", "org": "Astana Medical University (School of Pharmacy)", "region": "Kazakhstan", "country": "Kazakhstan", "city": "Astana", "type": "summer school", "field": "Pharmacy summer school (clinical practice exposure)", "who": "Students", "lang": "Russian/Kazakh (unclear)", "deadline": "See website", "funding": "June–Aug 2025,not found,not found", "intl": "unclear", "status": "active", "link": "https://amu.edu.kz/ru/infocenter/news/15167/", "score": 4, "notes": "Good regional option; verify 2026 edition when posted"}, {"id": "P43", "name": "GSK Australia Internship Programme (IBL) 2026 (12 months)", "org": "GSK", "region": "Australia", "country": "Australia", "city": "not found", "type": "internship", "field": "Medical & Clinical + commercial/business in pharma", "who": "Undergrad students (penultimate/final year)", "lang": "English", "deadline": "See website", "funding": "Jan 2026–Jan 2027,Applications closed,Paid/unclear", "intl": "no (work rights requirement)", "status": "active", "link": "https://au.gsk.com/en-au/careers/early-careers/students/", "score": 4, "notes": "Excellent long placement if you have Australian work rights"}, {"id": "P44", "name": "Walgreens Pharmacy Internships (community/corporate/annual)", "org": "Walgreens", "region": "USA/Canada", "country": "United States", "city": "Multiple US locations", "type": "internship", "field": "Community pharmacy + corporate pharmacy internships", "who": "Pharmacy students", "lang": "English", "deadline": "See website", "funding": "not found,not found,Paid/unclear", "intl": "unclear", "status": "recurring", "link": "https://jobs.walgreens.com/en/students", "score": 5, "notes": "Good community pharmacy track; confirm exact deadlines per posting"}, {"id": "P45", "name": "Walgreens Pharmacy Education Assistance Program (PEAP) 2025–2026 window", "org": "Walgreens", "region": "USA/Canada", "country": "United States", "city": "not found", "type": "financial support program (intern-linked)", "field": "Community pharmacy internship support", "who": "Pharmacy interns (enrolled PharmD)", "lang": "English", "deadline": "See website", "funding": "Sep 2 2025–Apr 1 2026,Apr 1 2026 (window end),Awards up to $", "intl": "unclear", "status": "active", "link": "https://jobs.walgreens.com/en/pharmacy-education-assistance", "score": 4, "notes": "Not an internship itself; boosts affordability for community pharmacy track"}, {"id": "P46", "name": "Boots Trainee Pharmacist placements (England/Wales/Scotland/NI info)", "org": "Boots", "region": "Europe", "country": "United Kingdom", "city": "Multiple", "type": "trainee placement", "field": "Community pharmacy foundation/trainee pathway", "who": "Trainee pharmacists (UK system)", "lang": "English", "deadline": "See website", "funding": "not found,Oct 23, 2025 (preferencing close; England flow),Pa", "intl": "unclear", "status": "active", "link": "https://www.boots.jobs/pharmacy/trainee-pharmacist/", "score": 4, "notes": "Best for UK pathway; process differs by nation (England via Oriel)"}];
+// ══════════════════════════════════════════════════════════
+// QUIZ DATA (18 questions)
+// ══════════════════════════════════════════════════════════
+const quiz=[
+{d:"Research skills and knowledge",sc:"Вы читаете статью в Nature и замечаете, что методология отличается от вашей.",t:"Как вы отреагируете?",o:[{t:"Отмечу, продолжу свой метод.",s:4},{t:"Сравнительный анализ обоих подходов + обсуждение с руководителем.",s:9},{t:"Перечитаю раздел Methods внимательнее.",s:6},{t:"Воспроизведу их подход параллельно на пилотных данных.",s:8}]},
+{d:"Research skills and knowledge",sc:"Нужно написать Discussion. Рецензент критиковал вас за слабый critical analysis.",t:"Какой подход?",o:[{t:"Сравню с 2-3 похожими работами.",s:5},{t:"Систематический разбор limitations + альтернативные интерпретации.",s:9},{t:"Попрошу соавтора помочь.",s:3},{t:"Таблица сравнения + обсуждение расхождений.",s:7}]},
+{d:"Research skills and knowledge",sc:"Неожиданные результаты: контрольная группа показала непредсказанный эффект.",t:"Ваши действия?",o:[{t:"Повторю эксперимент — скорее всего ошибка.",s:5},{t:"Проверю протокол, исключу артефакты, при подтверждении — новая гипотеза.",s:9},{t:"Расскажу руководителю.",s:3},{t:"Поищу подобный эффект в литературе.",s:6}]},
+{d:"Personal effectiveness",sc:"Дедлайн гранта через 5 дней. Одновременно: правки статьи, стажёр и эксперимент.",t:"Как вы организуетесь?",o:[{t:"Работаю допоздна каждый день.",s:4},{t:"Приоритизация: грант > эксперимент > статья, делегирую стажёра, time-блоки.",s:9},{t:"Попрошу перенести дедлайн.",s:6},{t:"Начну с простого для набора темпа.",s:5}]},
+{d:"Personal effectiveness",sc:"Коллега на митинге прямо критикует ваш экспериментальный дизайн как \"устаревший\".",t:"Ваша реакция?",o:[{t:"Обижусь, но промолчу.",s:3},{t:"Спрошу конкретные аргументы, поблагодарю, проанализирую объективно.",s:9},{t:"Защищу свой подход.",s:6},{t:"Соглашусь, чтобы избежать конфликта.",s:4}]},
+{d:"Personal effectiveness",sc:"3 месяца без выходных. Усталость, до защиты PhD ещё год.",t:"Что предпримете?",o:[{t:"Потерплю — после защиты отдохну.",s:3},{t:"Границы: вечера off, один выходной, перерывы, пересмотр плана.",s:9},{t:"Возьму неделю отпуска.",s:6},{t:"Сокращу время на менее важные задачи.",s:7}]},
+{d:"Professional development",sc:"В соседнем университете — лаборатория AI для drug discovery. Интересно, но не владеете.",t:"Что сделаете?",o:[{t:"Интересно, но не сейчас.",s:3},{t:"Курс по ML + контакт с PI + предложение коллаборации.",s:9},{t:"Почитаю их публикации.",s:6},{t:"Обсужу с руководителем визит в их лабораторию.",s:7}]},
+{d:"Professional development",sc:"На конференции учёные и стартапер заинтересовались вашим подходом к доставке лекарств.",t:"Дальнейшие шаги?",o:[{t:"Рад feedback, продолжу PhD.",s:4},{t:"Контакты → follow-up звонки → бизнес-кейс → патентные возможности.",s:9},{t:"Обменяюсь визитками.",s:5},{t:"Попрошу руководителя связаться.",s:6}]},
+{d:"Professional development",sc:"Финансирование сокращено, проект нужно переформатировать за 2 месяца.",t:"Как адаптируетесь?",o:[{t:"Подчинюсь решению кафедры.",s:3},{t:"Пересмотр целей + альтернативные данные + lean-версия проекта.",s:9},{t:"Поищу другое финансирование.",s:7},{t:"Обращусь к коллегам за помощью.",s:6}]},
+{d:"Leadership & Management",sc:"Руководите 3 магистрантами. Один не выполняет задачи и избегает обсуждений.",t:"Как поступите?",o:[{t:"Подожду — само наладится.",s:2},{t:"1-on-1 → причины → milestones → weekly check-ins.",s:9},{t:"Перераспределю задачи.",s:5},{t:"Сообщу руководителю.",s:4}]},
+{d:"Leadership & Management",sc:"Два члена группы не согласны по методу анализа. Тупик.",t:"Ваш подход?",o:[{t:"Пусть сами разберутся.",s:2},{t:"Структурированное обсуждение: плюсы/минусы → критерии выбора.",s:9},{t:"Приму решение сам.",s:6},{t:"Попробуем оба метода параллельно.",s:7}]},
+{d:"Leadership & Management",sc:"Предложили организовать PhD-семинар на 50 человек (не ваша обязанность).",t:"Ваше решение?",o:[{t:"Откажусь — хватает работы.",s:3},{t:"Соглашусь + план делегирования + волонтёры + networking.",s:9},{t:"Соглашусь с просьбой о помощи.",s:6},{t:"Уточню объём обязанностей.",s:7}]},
+{d:"Communication",sc:"Выступление на научпоп-фестивале перед не-учёными о вашем исследовании.",t:"Как подготовитесь?",o:[{t:"Мои обычные слайды, упрощу текст.",s:4},{t:"Нарратив + аналогии из жизни + визуальные метафоры + интерактив.",s:9},{t:"Попрошу не-учёного послушать репетицию.",s:7},{t:"Сокращу до 5 ключевых слайдов.",s:6}]},
+{d:"Communication",sc:"На конференции рядом за кофе — ведущий PI в вашей области. Никогда не общались.",t:"Что сделаете?",o:[{t:"Постесняюсь подойти.",s:2},{t:"Представлюсь, упомяну его работу, предложу обсудить пересечение.",s:9},{t:"Скажу привет, спрошу про конференцию.",s:5},{t:"Подойду после доклада с вопросом.",s:7}]},
+{d:"Communication",sc:"Готовите LinkedIn-пост о результатах исследования. Цель — внимание индустрии.",t:"Какой формат?",o:[{t:"Кратко опишу результат + ссылка.",s:5},{t:"Storytelling: проблема → пациенты → подход → результат → CTA для коллабораций.",s:9},{t:"Ссылка на препринт.",s:3},{t:"Инфографика с ключевыми цифрами.",s:7}]},
+{d:"Teaching",sc:"Практикум по биостатистике для 20 студентов-медиков. Боятся математики.",t:"Ваш подход к курсу?",o:[{t:"По учебнику — проверено.",s:4},{t:"Клинические кейсы + интерактивные задачи + peer-feedback.",s:9},{t:"Начну с простого, постепенно усложню.",s:6},{t:"Много практики с пошаговыми примерами.",s:7}]},
+{d:"Teaching",sc:"Магистрант 3 недели не может сформулировать research question. Приходит за «готовым ответом» каждый день.",t:"Как поступите?",o:[{t:"Дам готовый вопрос.",s:3},{t:"Сократовский метод: наводящие вопросы + framework.",s:9},{t:"Отправлю читать литературу.",s:5},{t:"Дам 3 варианта на выбор.",s:6}]},
+{d:"Teaching",sc:"Анонимная анкета: 3.2/5. Жалоба: «слишком быстрый темп».",t:"Ваша реакция?",o:[{t:"Обидно, но нет времени менять.",s:3},{t:"Анализ feedback → реструктуризация → check-points → mid-course survey.",s:9},{t:"Замедлю темп.",s:6},{t:"Добавлю доп. материалы.",s:7}]}
+];
 
-const S = {cvText:'',selectedJob:null,jobTab:'db',roadmap:null,coverLetterText:''};
+// ══════════════════════════════════════════════════════════
+// JOBS DATABASE
+// ══════════════════════════════════════════════════════════
+const jobsDB=[
+{title:"Clinical Research Associate (CRA)",company:"Novartis Russia",track:"clinical",tags:["мониторинг","GCP","oncology"],url:"https://hh.ru/search/vacancy?text=Clinical+Research+Associate+pharma&area=113",req:{"Research skills and knowledge":7,"Communication":7,"Professional development":6}},
+{title:"Medical Science Liaison",company:"Pfizer",track:"clinical",tags:["KOL","медицина","oncology"],url:"https://hh.ru/search/vacancy?text=Medical+Science+Liaison&area=113",req:{"Research skills and knowledge":8,"Communication":9,"Leadership & Management":6}},
+{title:"Regulatory Affairs Specialist",company:"R-Pharm",track:"regulatory",tags:["регуляторика","досье","EAEU"],url:"https://hh.ru/search/vacancy?text=Regulatory+Affairs+Specialist+pharma&area=113",req:{"Research skills and knowledge":7,"Personal effectiveness":7,"Professional development":6}},
+{title:"Drug Safety Officer",company:"AstraZeneca",track:"regulatory",tags:["pharmacovigilance","safety","MedDRA"],url:"https://hh.ru/search/vacancy?text=Drug+Safety+Officer&area=113",req:{"Research skills and knowledge":8,"Personal effectiveness":8,"Communication":6}},
+{title:"Product Manager (Pharma)",company:"Biocad",track:"commercial",tags:["маркетинг","launch","biosimilars"],url:"https://hh.ru/search/vacancy?text=Product+Manager+pharma&area=113",req:{"Leadership & Management":8,"Communication":8,"Professional development":7}},
+{title:"Key Account Manager",company:"Roche",track:"commercial",tags:["продажи","KAM","diagnostics"],url:"https://hh.ru/search/vacancy?text=Key+Account+Manager+pharma&area=113",req:{"Communication":9,"Leadership & Management":7,"Personal effectiveness":7}},
+{title:"Postdoc — Molecular Pharmacology",company:"МГУ / Сколтех",track:"academic",tags:["postdoc","screening","molecular"],url:"https://hh.ru/search/vacancy?text=postdoc+pharmacology&area=113",req:{"Research skills and knowledge":9,"Teaching":6,"Personal effectiveness":7}},
+{title:"Research Scientist (Drug Discovery)",company:"ChemRar",track:"rd",tags:["R&D","HTS","med chem"],url:"https://hh.ru/search/vacancy?text=Research+Scientist+drug+discovery&area=113",req:{"Research skills and knowledge":9,"Professional development":7,"Personal effectiveness":7}},
+{title:"Clinical Operations Manager",company:"ICON",track:"management",tags:["CRO","trials","management"],url:"https://hh.ru/search/vacancy?text=Clinical+Operations+Manager&area=113",req:{"Leadership & Management":9,"Communication":7,"Personal effectiveness":8}},
+{title:"Head of Regulatory (Russia/CIS)",company:"Bayer",track:"management",tags:["regulatory","leadership","strategy"],url:"https://hh.ru/search/vacancy?text=Head+Regulatory+pharma&area=113",req:{"Leadership & Management":9,"Research skills and knowledge":7,"Communication":8}},
+{title:"Medical Advisor",company:"GSK",track:"clinical",tags:["medical affairs","publications","advisory boards"],url:"https://hh.ru/search/vacancy?text=Medical+Advisor+pharma&area=113",req:{"Research skills and knowledge":8,"Communication":8,"Teaching":5}},
+{title:"Biostatistician",company:"Parexel",track:"rd",tags:["statistics","SAS","clinical data"],url:"https://hh.ru/search/vacancy?text=Biostatistician&area=113",req:{"Research skills and knowledge":9,"Personal effectiveness":7,"Teaching":5}},
+{title:"QA Manager (GMP)",company:"Фармстандарт",track:"management",tags:["GMP","quality","audit"],url:"https://hh.ru/search/vacancy?text=QA+Manager+GMP+pharma&area=113",req:{"Leadership & Management":8,"Research skills and knowledge":6,"Personal effectiveness":8}},
+{title:"Medical Writer",company:"McCann Health",track:"commercial",tags:["medical writing","publications","content"],url:"https://hh.ru/search/vacancy?text=Medical+Writer&area=113",req:{"Research skills and knowledge":7,"Communication":9,"Professional development":6}},
+{title:"Clinical Data Manager",company:"Syneos Health",track:"clinical",tags:["EDC","data management","CDISC"],url:"https://hh.ru/search/vacancy?text=Clinical+Data+Manager&area=113",req:{"Research skills and knowledge":7,"Personal effectiveness":8,"Professional development":6}},
+{title:"PhD Researcher — Neuropharmacology",company:"ИЭФБ РАН",track:"academic",tags:["PhD","neuroscience","electrophysiology"],url:"https://hh.ru/search/vacancy?text=PhD+neuropharmacology&area=113",req:{"Research skills and knowledge":9,"Teaching":7,"Personal effectiveness":8}},
+{title:"Business Development (Biotech)",company:"Genetico",track:"commercial",tags:["BD","partnerships","biotech"],url:"https://hh.ru/search/vacancy?text=Business+Development+biotech&area=113",req:{"Leadership & Management":7,"Communication":8,"Professional development":9}},
+{title:"Pharmacometrician",company:"Certara",track:"rd",tags:["PK/PD","modeling","NONMEM"],url:"https://hh.ru/search/vacancy?text=Pharmacometrician&area=113",req:{"Research skills and knowledge":9,"Professional development":7,"Personal effectiveness":7}},
+];
 
-document.addEventListener('DOMContentLoaded',()=>{renderJobList(JOBS_DB);renderJobsGrid();
-  renderProgramsGrid();loadSaved();});
+const progsDB=[
+{title:"Roche Internship Program",org:"Roche",region:"eu",type:"internship",tags:["Basel","6 мес","pharma"],url:"https://www.roche.com/careers/students-and-graduates"},
+{title:"Novartis BioCamp",org:"Novartis",region:"eu",type:"summer",tags:["Вена","1 нед","networking"],url:"https://www.novartis.com/careers/students-scholars"},
+{title:"Pfizer Summer Trainee",org:"Pfizer",region:"us",type:"internship",tags:["NYC","10 нед","R&D"],url:"https://www.pfizer.com/about/careers/internships"},
+{title:"Сколтех — BioTech Track",org:"Сколково",region:"ru",type:"internship",tags:["Москва","3 мес","стартап"],url:"https://www.skoltech.ru/en/education/"},
+{title:"EMBO Short-Term Fellowship",org:"EMBO",region:"eu",type:"fellowship",tags:["Европа","3 мес","research"],url:"https://www.embo.org/funding/fellowships-grants-and-career-support/"},
+{title:"Biocad R&D Trainee",org:"Biocad",region:"ru",type:"internship",tags:["СПб","6 мес","biosimilars"],url:"https://biocad.ru/career"},
+{title:"AMGEN Scholars Program",org:"AMGEN",region:"us",type:"summer",tags:["USA","8 нед","лаборатория"],url:"https://amgenscholars.com/"},
+{title:"EMA Traineeship",org:"EMA",region:"eu",type:"internship",tags:["Amsterdam","5 мес","regulatory"],url:"https://www.ema.europa.eu/en/about-us/careers"},
+{title:"Летняя школа МФТИ — BioInformatics",org:"МФТИ",region:"ru",type:"summer",tags:["Долгопрудный","2 нед","bioinformatics"],url:"https://mipt.ru/education/"},
+{title:"AstraZeneca Graduate Program",org:"AstraZeneca",region:"eu",type:"internship",tags:["Cambridge","2 года","rotational"],url:"https://www.astrazeneca.com/careers/students.html"},
+{title:"FDA Summer Internship",org:"FDA",region:"us",type:"summer",tags:["Washington","10 нед","regulation"],url:"https://www.fda.gov/about-fda/jobs-and-training-fda/internships-and-trainees"},
+{title:"R-Pharm Стажировка",org:"R-Pharm",region:"ru",type:"internship",tags:["Москва","4 мес","production"],url:"https://r-pharm.com/ru/career/"},
+];
 
-function loadSaved(){
-  try{const s=sessionStorage.getItem('pf_roadmap');if(s){S.roadmap=JSON.parse(s);renderDashboard(S.roadmap);}}catch(e){}
-}
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let scores={};
+let curQ=0,qAns={};
+let radarInst=null;
+let cvContent='';
+let aiCoverLetter='';
+let apiKey='';
+let chatHistory=[];
+let lastAiResult=null;
 
-function showPage(id,el){
+function loadState(){try{const s=localStorage.getItem('pf_scores_g');if(s)scores=JSON.parse(s);}catch(e){}}
+function saveState(){try{localStorage.setItem('pf_scores_g',JSON.stringify(scores));}catch(e){}}
+loadState();
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
+const pageMap={home:0,quiz:1,chat:2,results:3,jobs:4,programs:5,manual:6};
+function go(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.topnav-item').forEach(n=>n.classList.remove('active'));
-  if(el&&el.classList)el.classList.add('active');
+  document.getElementById('p-'+name).classList.add('active');
+  document.querySelectorAll('#mainNav button').forEach((b,i)=>{b.classList.toggle('active',i===pageMap[name]);});
+  if(name==='results')renderRes();
+  if(name==='jobs')renderJobs();
+  if(name==='programs')renderProgs();
+  if(name==='manual')renderManual();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function rtab(id,btn){
+  document.querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
 }
 
-function dragOver(e){e.preventDefault();document.getElementById('cvZone').classList.add('dragover');}
-function dragLeave(e){document.getElementById('cvZone').classList.remove('dragover');}
-function dropFile(e){e.preventDefault();dragLeave();const f=e.dataTransfer.files[0];if(f)processFile(f);}
-function handleFileSelect(e){const f=e.target.files[0];if(f)processFile(f);}
-function processFile(f){
-  document.getElementById('cvZone').classList.add('has-file');
-  document.getElementById('cvIcon').textContent='✅';
-  document.getElementById('cvTitle').textContent=f.name;
-  const r=new FileReader();
-  r.onload=e=>{S.cvText=e.target.result;document.getElementById('cvText').value=S.cvText.substring(0,3000);updateStep(1,true);checkReady();};
-  r.readAsText(f);
+// ══════════════════════════════════════════════════════════
+// GEMINI API
+// ══════════════════════════════════════════════════════════
+const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+function checkApiKey(){
+  apiKey=document.getElementById('apiKeyInput').value.trim();
+  const valid=apiKey.length>20;
+  document.getElementById('apiDot').className='api-status '+(valid?'ok':'off');
+  checkAnalyzeReady();
 }
 
-function switchJobTab(t){
-  S.jobTab=t;
-  document.getElementById('jobDBPanel').style.display=t==='db'?'block':'none';
-  document.getElementById('jobPastePanel').style.display=t==='paste'?'block':'none';
-  document.getElementById('tbDB').classList.toggle('active',t==='db');
-  document.getElementById('tbPaste').classList.toggle('active',t==='paste');
-  checkReady();
+async function testApi(){
+  if(!apiKey){showToast('⚠️ Введите API-ключ');return;}
+  try{
+    const r=await fetch(`${GEMINI_URL}?key=${apiKey}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:'Say OK in one word'}]}]})
+    });
+    if(r.ok){
+      document.getElementById('apiDot').className='api-status ok';
+      showToast('✅ Gemini API работает!');
+    }else{
+      const e=await r.json();
+      showToast('❌ Ошибка: '+(e.error?.message||r.status));
+    }
+  }catch(e){showToast('❌ Сетевая ошибка: '+e.message);}
 }
 
-function renderJobList(jobs){
-  document.getElementById('jobList').innerHTML=jobs.map(j=>`
-    <div class="job-item" id="ji-${j.id}" onclick="selectJob(${j.id})">
-      <div class="job-item-title">${j.title}</div>
-      <div class="job-item-meta">${j.company} · ${j.location.split('(')[0].trim()}</div>
-      <div class="job-item-tags">${j.required.slice(0,3).map(t=>`<span class="jtag">${t}</span>`).join('')}</div>
-    </div>`).join('');
+async function callGemini(prompt, jsonMode=false){
+  const body={
+    contents:[{parts:[{text:prompt}]}],
+    generationConfig:{temperature:0.7,maxOutputTokens:3000}
+  };
+  if(jsonMode){
+    body.generationConfig.responseMimeType='application/json';
+    body.generationConfig.temperature=0.3;
+  }
+  const r=await fetch(`${GEMINI_URL}?key=${apiKey}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'Gemini API error '+r.status);}
+  const data=await r.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
 }
 
-function filterJobs(q){
-  const f=JOBS_DB.filter(j=>j.title.toLowerCase().includes(q.toLowerCase())||j.company.toLowerCase().includes(q.toLowerCase())||j.required.some(s=>s.toLowerCase().includes(q.toLowerCase())));
-  renderJobList(f);
+// ══════════════════════════════════════════════════════════
+// FILE UPLOAD
+// ══════════════════════════════════════════════════════════
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');if(e.dataTransfer.files.length)processFile(e.dataTransfer.files[0]);});
+
+function handleFile(input){if(input.files.length)processFile(input.files[0]);}
+
+function processFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=e.target.result;
+    const cleaned=text.replace(/[^\x20-\x7E\u0400-\u04FF\n\r\t]/g,' ').replace(/\s+/g,' ').trim();
+    cvContent=cleaned.substring(0,10000);
+    showFileInfo(file.name,cvContent.length);
+  };
+  reader.readAsText(file,'utf-8');
 }
 
-function selectJob(id){
-  S.selectedJob=JOBS_DB.find(j=>j.id===id);
-  document.querySelectorAll('.job-item').forEach(e=>e.classList.remove('selected'));
-  document.getElementById('ji-'+id)?.classList.add('selected');
-  updateStep(2,true);checkReady();
+function showFileInfo(name,len){
+  const fi=document.getElementById('fileInfo');
+  fi.style.display='block';
+  fi.innerHTML=`<div class="file-info">
+    <span>📄</span>
+    <span class="fi-name">${name}</span>
+    <span style="color:var(--text3);font-size:0.82em;">${(len/1024).toFixed(1)} KB</span>
+    <span class="fi-remove" onclick="removeFile()">✕</span>
+  </div>`;
+  dz.classList.add('has-file');
+  checkAnalyzeReady();
 }
 
-function renderJobsGrid(){
-  document.getElementById('jobsGrid').innerHTML=JOBS_DB.map(j=>`
-    <div class="job-card" onclick="useJob(${j.id})">
-      <div class="job-card-company">${j.company}</div>
-      <div class="job-card-title">${j.title}</div>
-      <div class="job-card-loc">📍 ${j.location}</div>
-      <div class="job-card-tags">${j.required.slice(0,4).map(t=>`<span class="job-card-tag required">${t}</span>`).join('')}${j.nice.slice(0,2).map(t=>`<span class="job-card-tag">${t}</span>`).join('')}</div>
-      <div class="job-card-footer"><span class="job-card-type">${j.type}</span><span class="job-card-btn">Analyze for me →</span></div>
-    </div>`).join('');
+function removeFile(){
+  cvContent='';
+  document.getElementById('fileInfo').style.display='none';
+  document.getElementById('cvFile').value='';
+  dz.classList.remove('has-file');
+  checkAnalyzeReady();
 }
 
-function useJob(id){
-  S.selectedJob=JOBS_DB.find(j=>j.id===id);
-  showPage('upload',document.querySelector('.topnav-item'));
-  setTimeout(()=>{document.querySelectorAll('.job-item').forEach(e=>e.classList.remove('selected'));document.getElementById('ji-'+id)?.classList.add('selected');updateStep(2,true);checkReady();},100);
+function checkAnalyzeReady(){
+  const hasContent=cvContent||document.getElementById('cvText').value.trim()||document.getElementById('profileDesc').value.trim();
+  document.getElementById('analyzeBtn').disabled=!(apiKey.length>20&&hasContent);
 }
+document.getElementById('cvText').addEventListener('input',checkAnalyzeReady);
+document.getElementById('profileDesc').addEventListener('input',checkAnalyzeReady);
 
-function updateStep(n,done){
-  const el=document.getElementById('fstep'+n);
-  if(done){el.classList.add('done');el.classList.remove('active');}
-  const next=document.getElementById('fstep'+(n+1));
-  if(next&&done)next.classList.add('active');
-  const con=document.getElementById('fcon'+n);
-  if(con&&done)con.classList.add('done');
-}
-
-function checkReady(){
-  const cv=S.cvText||document.getElementById('cvText').value.trim();
-  const hasCv=cv.length>30;
-  if(hasCv)updateStep(1,true);
-  const hasJob=S.selectedJob||(S.jobTab==='paste'&&document.getElementById('jdPaste').value.trim().length>50);
-  const ready=hasCv&&hasJob;
-  document.getElementById('analyzeBtn').disabled=!ready;
-  if(ready){const n=S.selectedJob?S.selectedJob.title:'Custom JD';document.getElementById('actionStatus').innerHTML=`<strong>Ready!</strong> "${n}" selected`;}
-  else if(hasCv)document.getElementById('actionStatus').textContent='Now select a target job';
-  else document.getElementById('actionStatus').textContent='Upload or paste your CV to start';
-}
-
+// ══════════════════════════════════════════════════════════
+// AI ANALYSIS (GEMINI)
+// ══════════════════════════════════════════════════════════
 async function runAnalysis(){
-  const cv=document.getElementById('cvText').value||S.cvText;
-  const jd=S.selectedJob?S.selectedJob.description:document.getElementById('jdPaste').value;
-  if(!cv||!jd)return;
+  const cv=cvContent||document.getElementById('cvText').value.trim();
+  const profile=document.getElementById('profileDesc').value.trim();
+  const targetJob=document.getElementById('targetJob').value;
 
-  const overlay=document.getElementById('analyzingOverlay');
-  overlay.classList.add('show');
-  const steps=['as1','as2','as3','as4','as5','as6'];
-  let si=0;
-  const iv=setInterval(()=>{
-    if(si>0){const prev=document.getElementById(steps[si-1]);prev.classList.remove('active');prev.classList.add('done');prev.innerHTML='✓ '+prev.textContent.replace('✓ ','');}
-    if(si<steps.length){document.getElementById(steps[si]).classList.add('active');si++;}
-  },800);
+  if(!cv&&!profile){showToast('⚠️ Загрузите CV или опишите профиль');return;}
 
-  const prompt=`You are Pathfinder AI — a career roadmap engine for pharma/biotech professionals. Analyze the CV against the job description and return ONLY valid JSON (no markdown fences, no preamble).
+  document.getElementById('analysisLoader').style.display='block';
+  document.getElementById('aiResult').style.display='none';
+  document.getElementById('analyzeBtn').disabled=true;
 
-CV:
-${cv.substring(0,2500)}
+  const steps=['ls1','ls2','ls3','ls4'];
+  let stepIdx=0;
+  const stepTimer=setInterval(()=>{
+    if(stepIdx>0)document.getElementById(steps[stepIdx-1]).className='loader-step done';
+    if(stepIdx<steps.length)document.getElementById(steps[stepIdx]).className='loader-step active';
+    stepIdx++;
+    if(stepIdx>steps.length)clearInterval(stepTimer);
+  },3500);
 
-JOB DESCRIPTION:
-${jd.substring(0,2000)}
+  const domainList=groups.join(', ');
+  const prompt=`You are a career analysis AI for pharma/biotech industry, using the PhD Competence Model.
 
-Return exactly this JSON structure:
+TASK: Analyze the candidate's profile. Return ONLY a valid JSON object — no markdown, no backticks, no extra text.
+
+Domains to score (1-10 each): ${domainList}
+
+Candidate CV:
+${cv||'(not provided)'}
+
+Candidate self-description:
+${profile||'(not provided)'}
+
+${targetJob?'Target position: '+targetJob:''}
+
+Return ONLY this JSON:
 {
-  "jobTitle": "string",
-  "company": "string",
-  "matchScore": number,
-  "gapScore": number,
-  "strengths": ["string x4"],
-  "skillGaps": [{"skill":"string","currentLevel":number,"required":number,"priority":"high|medium|low"}],
-  "milestones": [{"period":"string","title":"string","description":"string","artifacts":["string"],"status":"done|active|upcoming|locked"}],
-  "thirtyDayPlan": [{"week":"string","tasks":[{"title":"string","type":"apply|learn|build|network","effort":"string"}]}],
-  "coverLetter": "string"
-}
-
-Rules: 3-5 skillGaps, exactly 5 milestones, 3 weeks in plan with 3-4 tasks each, cover letter 200-250 words, be specific to pharma/biotech.`;
+  "scores": { "Research skills and knowledge": <number>, "Personal effectiveness": <number>, "Professional development": <number>, "Leadership & Management": <number>, "Communication": <number>, "Teaching": <number> },
+  "summary": "<2-3 sentences summarizing the candidate in Russian>",
+  "strengths": ["<strength1 in Russian>","<strength2>","<strength3>"],
+  "gaps": ["<gap1 in Russian>","<gap2>","<gap3>"],
+  "top_jobs": ["<job title 1>","<job title 2>","<job title 3>"],
+  "recommendations": ["<rec1 in Russian>","<rec2>","<rec3>"],
+  "cover_letter": "<cover letter in Russian for the target or best matching position, 150-200 words>",
+  "ai_insights": "<3-4 paragraphs of deep personalized career insights in Russian, based on the profile>"
+}`;
 
   try{
-    const res=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
-    clearInterval(iv);
-    steps.forEach(s=>{const el=document.getElementById(s);el.classList.remove('active');el.classList.add('done');});
-    await new Promise(r=>setTimeout(r,600));
-    overlay.classList.remove('show');
-    if(!res.ok)throw new Error('API error '+res.status);
-    const data=await res.json();
-    const roadmap=data.roadmap;
-    S.roadmap=roadmap;
-    try{sessionStorage.setItem('pf_roadmap',JSON.stringify(roadmap));}catch(e){}
-    renderDashboard(roadmap);
-    showPage('dashboard',document.querySelectorAll('.topnav-item')[1]);
-    document.getElementById('topBadge').style.display='inline';
-    showToast('Roadmap generated! ✓');
-  }catch(err){
-    clearInterval(iv);
-    steps.forEach(s=>{const el=document.getElementById(s);el.classList.remove('active');el.classList.add('done');});
-    overlay.classList.remove('show');
-    const fb=fallback(S.selectedJob);S.roadmap=fb;
-    renderDashboard(fb);
-    showPage('dashboard',document.querySelectorAll('.topnav-item')[1]);
-    document.getElementById('topBadge').style.display='inline';
-    showToast('Demo roadmap shown (connect API for real analysis)');
-  }
-}
+    const text=await callGemini(prompt,true);
+    clearInterval(stepTimer);
+    steps.forEach(s=>document.getElementById(s).className='loader-step done');
 
-function fallback(job){
-  const j=job||JOBS_DB[0];
-  return{jobTitle:j.title,company:j.company,matchScore:42,gapScore:58,
-    strengths:["Research methodology","Analytical thinking","Academic writing","Data interpretation"],
-    skillGaps:[
-      {skill:j.required[0]||"Core Technical Skill",currentLevel:20,required:90,priority:"high"},
-      {skill:j.required[1]||"Industry Knowledge",currentLevel:10,required:85,priority:"high"},
-      {skill:j.required[2]||"Regulatory Awareness",currentLevel:15,required:80,priority:"high"},
-      {skill:j.required[3]||"Software Tools",currentLevel:5,required:70,priority:"medium"}
-    ],
-    milestones:[
-      {period:"Now",title:"Baseline Assessment",description:"Document current skills and map gaps against target role requirements.",artifacts:["Gap Map","Updated CV"],status:"done"},
-      {period:"Month 1–3",title:"Core Skills Acquisition",description:`Focus on ${j.required[0]} and ${j.required[1]} via targeted online courses and self-study.`,artifacts:["Certificate","Mini-project"],status:"active"},
-      {period:"Month 4–8",title:"Industry Exposure",description:"Internship, volunteer project, or shadowing at a pharma/biotech organization.",artifacts:["Industry Reference","Portfolio item"],status:"upcoming"},
-      {period:"Month 9–16",title:"Specialization & Network",description:`Deepen expertise in ${j.required[2]}. Attend 1–2 industry conferences. Build professional network.`,artifacts:["Conference certificate","10+ contacts"],status:"locked"},
-      {period:"Month 17–24",title:`Land Role at ${j.company}`,description:"Apply with a strong portfolio and referrals. Target 3–5 companies in parallel.",artifacts:["Offer Letter"],status:"locked"}
-    ],
-    thirtyDayPlan:[
-      {week:"Week 1 — Quick Wins",tasks:[
-        {title:`Research best ${j.required[0]} courses on Coursera or edX`,type:"learn",effort:"2 hrs"},
-        {title:`Connect with 3 professionals at ${j.company} on LinkedIn`,type:"network",effort:"30 min"},
-        {title:"Update CV with pharma-specific keywords",type:"build",effort:"1 hr"}
-      ]},
-      {week:"Week 2 — Start Learning",tasks:[
-        {title:`Begin ${j.required[0]} beginner module`,type:"learn",effort:"4 hrs"},
-        {title:`Read 2 recent articles on ${j.required[1]}`,type:"learn",effort:"2 hrs"},
-        {title:"Shortlist 5 pharma companies for future applications",type:"apply",effort:"1 hr"}
-      ]},
-      {week:"Week 3–4 — Build & Apply",tasks:[
-        {title:`Complete first ${j.required[0]} certification module`,type:"learn",effort:"6 hrs"},
-        {title:"Attend a pharma/biotech webinar",type:"network",effort:"2 hrs"},
-        {title:"Draft one tailored internship application",type:"apply",effort:"3 hrs"},
-        {title:`Build a small project demonstrating ${j.required[0]}`,type:"build",effort:"4 hrs"}
-      ]}
-    ],
-    coverLetter:`Dear Hiring Team at ${j.company},
+    const clean=text.replace(/```json|```/g,'').trim();
+    const result=JSON.parse(clean);
 
-I am writing to express my genuine interest in the ${j.title} role. My background in life sciences, combined with a structured approach to professional development, makes me eager to contribute to your team and grow within the pharma industry.
+    // Apply scores
+    scores={};
+    groups.forEach(g=>{scores[g]=Math.max(1,Math.min(10,result.scores[g]||5));});
+    saveState();
+    lastAiResult=result;
 
-Through my academic and research experience, I have developed strong foundations in analytical thinking and scientific communication. I am currently focused on building targeted expertise in ${j.required[0]} and ${j.required[1]} — skills I understand are central to success in this position. I am drawn to ${j.company} specifically because of its leadership in innovation and its commitment to patient outcomes.
+    aiCoverLetter=result.cover_letter||'';
 
-I approach skill development with urgency and structure — I learn fast, apply immediately, and maintain a clear long-term vision. I would welcome the opportunity to discuss how my background and ambition align with this role.
+    document.getElementById('analysisLoader').style.display='none';
+    document.getElementById('aiResult').style.display='block';
 
-Thank you for your time and consideration.
+    let html=`<strong>📋 Резюме профиля:</strong>\n${result.summary}\n\n`;
+    html+=`<strong>✅ Сильные стороны:</strong>\n${(result.strengths||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n`;
+    html+=`<strong>⚠️ Зоны роста:</strong>\n${(result.gaps||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n`;
+    html+=`<strong>🎯 Лучшие позиции:</strong>\n${(result.top_jobs||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')}\n\n`;
+    html+=`<strong>💡 Рекомендации:</strong>\n${(result.recommendations||[]).map((s,i)=>`${i+1}. ${s}`).join('\n')}`;
+    document.getElementById('aiSummary').innerHTML=html;
 
-Sincerely,
-[Your Name]`
-  };
-}
-
-function renderDashboard(r){
-  document.getElementById('dashEmpty').style.display='none';
-  document.getElementById('dashContent').style.display='block';
-  document.getElementById('heroTitle').innerHTML=`Your Roadmap to <em>${r.jobTitle} @ ${r.company}</em>`;
-  document.getElementById('heroSub').textContent='AI-generated · 2-year horizon · Personalized to your CV';
-  document.getElementById('matchPct').textContent=r.matchScore+'%';
-  document.getElementById('gapPct').textContent=r.gapScore+'%';
-  document.getElementById('milestoneCount').textContent=(r.milestones||[]).length;
-
-  document.getElementById('skillGapBody').innerHTML=(r.skillGaps||[]).map(g=>{
-    const c=g.currentLevel<30?'low':g.currentLevel<60?'mid':'high';
-    return`<div class="sg-item"><div class="sg-row"><span class="sg-name">${g.skill}</span><span class="sg-pct">${g.currentLevel}% → ${g.required}%</span></div><div class="sg-track"><div class="sg-fill ${c}" style="width:0%" data-w="${g.currentLevel}%"></div></div></div>`;
-  }).join('');
-  setTimeout(()=>document.querySelectorAll('.sg-fill').forEach(el=>el.style.width=el.dataset.w),100);
-
-  document.getElementById('strengthsBody').innerHTML=(r.strengths||[]).map(s=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--ink)"><span style="color:var(--teal)">✓</span>${s}</div>`).join('');
-
-  const sm={done:'done',active:'active',upcoming:'',locked:'locked'};
-  document.getElementById('timelineBody').innerHTML=(r.milestones||[]).map(m=>{
-    const tc=m.status==='done'?'done':m.status==='active'?'active':m.status==='locked'?'locked':'';
-    return`<div class="tl-item ${sm[m.status]||''}"><div class="tl-dot"></div><div class="tl-period">${m.period}</div><div class="tl-title">${m.title}</div><div class="tl-desc">${m.description}</div><div class="tl-tags">${(m.artifacts||[]).map(a=>`<span class="tl-tag ${tc}">${a}</span>`).join('')}</div></div>`;
-  }).join('');
-
-  const tm={apply:'tb-apply',learn:'tb-learn',build:'tb-build',network:'tb-network'};
-  document.getElementById('planBody').innerHTML=(r.thirtyDayPlan||[]).map(w=>`
-    <div class="task-section"><div class="task-week">${w.week}</div>
-    ${(w.tasks||[]).map(t=>`<div class="task-row" onclick="toggleTask(this)"><div class="task-cb"></div><div style="flex:1"><div class="task-text">${t.title}</div><div class="task-meta-sm">Est. ${t.effort}</div></div><span class="task-type-badge ${tm[t.type]||'tb-learn'}">${t.type}</span></div>`).join('')}
-    </div>`).join('');
-
-  const lb=document.getElementById('letterBox');
-  lb.innerHTML='';
-  S.coverLetterText=r.coverLetter||'';
-  typeWrite(lb,S.coverLetterText,12);
-}
-
-function typeWrite(el,text,delay){
-  let i=0;
-  const cur=document.createElement('span');cur.className='typing-cursor';el.appendChild(cur);
-  const iv=setInterval(()=>{
-    if(i<text.length){el.insertBefore(document.createTextNode(text[i]),cur);i++;el.scrollTop=el.scrollHeight;}
-    else{clearInterval(iv);cur.remove();}
-  },delay);
-}
-
-function copyCoverLetter(){
-  navigator.clipboard.writeText(S.coverLetterText).catch(()=>{});
-  showToast('Cover letter copied!');
-}
-
-function toggleTask(el){
-  el.classList.toggle('checked');
-  el.querySelector('.task-cb').textContent=el.classList.contains('checked')?'✓':'';
-  if(el.classList.contains('checked'))showToast('Task complete! Keep going 🎯');
-}
-
-
-function filterJobCategory(cat, btn) {
-  document.querySelectorAll('#jobCategoryFilter .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderJobsGrid(cat);
-}
-
-function filterPrograms(filter, btn) {
-  document.querySelectorAll('#page-programs .filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderProgramsGrid(filter);
-}
-
-function renderJobsGrid(catFilter) {
-  const jobs = catFilter && catFilter !== 'all'
-    ? JOBS_DB.filter(j => j.category === catFilter)
-    : JOBS_DB;
-  document.getElementById('jobsGrid').innerHTML = jobs.map(j => `
-    <div class="job-card" onclick="useJob(${j.id})">
-      <div class="job-card-company">${j.category} · ${j.company.split(',')[0]}</div>
-      <div class="job-card-title">${j.title}</div>
-      <div class="job-card-loc">📍 ${j.location.substring(0,40)}${j.location.length>40?'...':''}</div>
-      <div class="job-card-salary">💰 ${j.salary || 'По договоренности'}</div>
-      <div class="job-card-exp">Experience: ${j.experience || 'Not specified'}</div>
-      <div class="job-card-tags">
-        ${j.required.slice(0,3).map(t=>`<span class="job-card-tag required">${t}</span>`).join('')}
-        ${j.nice.slice(0,2).map(t=>`<span class="job-card-tag">${t}</span>`).join('')}
-      </div>
-      <div class="job-card-footer">
-        <span class="job-card-type">${j.type}</span>
-        <span class="job-card-btn">Analyze for me →</span>
-      </div>
-    </div>`).join('');
-}
-
-function renderProgramsGrid(filter) {
-  let programs = PROGRAMS_DB;
-  if (filter && filter !== 'all') {
-    if (filter === 'score5') {
-      programs = programs.filter(p => p.score === 5);
-    } else if (['Russia','Europe','USA/Canada'].includes(filter)) {
-      programs = programs.filter(p => p.region === filter);
-    } else {
-      programs = programs.filter(p => p.type && p.type.toLowerCase().includes(filter.toLowerCase()));
+    // Store insights for profile tab
+    if(result.ai_insights){
+      document.getElementById('aiInsights').innerHTML=`<div class="ai-block" style="border-color:var(--gemini);">${result.ai_insights}</div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-sm btn-ghost" onclick="generateInsights()">🔄 Обновить инсайты</button>
+          <button class="btn btn-sm btn-outline" onclick="go('chat')">💬 Обсудить</button>
+        </div>`;
     }
-  }
 
-  document.getElementById('programsGrid').innerHTML = programs.map(p => {
-    const typeClass = p.type.includes('summer') ? 'summer' : p.type.includes('traineeship') ? 'traineeship' : p.type.includes('training') ? 'training' : 'internship';
-    const stars = '★'.repeat(p.score) + '☆'.repeat(5 - p.score);
-    const intlClass = p.intl === 'yes' ? 'yes' : p.intl === 'no' ? 'no' : 'unclear';
-    const intlLabel = p.intl === 'yes' ? '🌍 Intl OK' : p.intl === 'no' ? '🏠 Local only' : '❓ Check eligibility';
-    const funding = p.funding && p.funding !== 'See website' && p.funding.length < 50 ? p.funding : 'See website';
-    const deadline = p.deadline && p.deadline !== 'See website' && p.deadline.length < 50 ? p.deadline : 'See website';
-    return `
-    <div class="prog-card">
-      <div class="prog-score">${stars}</div>
-      <div class="prog-type ${typeClass}">${p.type}</div>
-      <div class="prog-name">${p.name}</div>
-      <div class="prog-org">${p.org} · ${p.city !== 'None' ? p.city : p.country}</div>
-      <div class="prog-meta">
-        <div class="prog-meta-row"><span class="prog-meta-icon">📅</span>Deadline: ${deadline}</div>
-        <div class="prog-meta-row"><span class="prog-meta-icon">💰</span>${funding}</div>
-        <div class="prog-meta-row"><span class="prog-meta-icon">🗣️</span>${p.lang}</div>
-        ${p.notes ? `<div class="prog-meta-row" style="color:var(--muted);font-style:italic;font-size:11px">${p.notes}</div>` : ''}
+    // Seed chat context
+    chatHistory=[{
+      role:'user',
+      parts:[{text:`My pharma career profile: ${JSON.stringify(result).substring(0,1500)}`}]
+    },{
+      role:'model',
+      parts:[{text:'Отлично! Я изучил ваш профиль. Можете задавать вопросы о карьере, компетенциях и вакансиях.'}]
+    }];
+
+    document.getElementById('analyzeBtn').disabled=false;
+    showToast('✅ Анализ завершён! Перейдите в профиль.');
+
+  }catch(e){
+    clearInterval(stepTimer);
+    document.getElementById('analysisLoader').style.display='none';
+    document.getElementById('analyzeBtn').disabled=false;
+    showToast('❌ Ошибка: '+e.message);
+    console.error(e);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// AI INSIGHTS (on-demand)
+// ══════════════════════════════════════════════════════════
+async function generateInsights(){
+  if(!apiKey){showToast('⚠️ Введите API-ключ');return;}
+  const has=Object.values(scores).some(v=>v>0);
+  if(!has){showToast('⚠️ Сначала создайте профиль');return;}
+
+  document.getElementById('aiInsights').innerHTML=`<div style="text-align:center;padding:24px;"><div class="spinner"></div><p style="color:var(--text3);">Gemini анализирует ваш профиль...</p></div>`;
+
+  const profileSummary=groups.map(g=>`${g}: ${scores[g]||0}/10`).join(', ');
+  const sorted=[...groups].sort((a,b)=>(scores[a]||0)-(scores[b]||0));
+  const prompt=`You are an expert pharma career advisor. Provide deep, personalized career insights in Russian for this PhD candidate.
+
+Their PhD Competence Model scores: ${profileSummary}
+Weakest areas: ${sorted.slice(0,2).join(', ')}
+Strongest areas: ${sorted.slice(-2).reverse().join(', ')}
+
+Write 3-4 substantive paragraphs with specific, actionable career advice for pharma/biotech industry. Be concrete, mention real strategies and resources. Write in Russian.`;
+
+  try{
+    const text=await callGemini(prompt);
+    document.getElementById('aiInsights').innerHTML=`<div class="ai-block" style="border-color:var(--gemini);">${text}</div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-sm btn-ghost" onclick="generateInsights()">🔄 Обновить</button>
+        <button class="btn btn-sm btn-outline" onclick="go('chat')">💬 Обсудить</button>
+      </div>`;
+  }catch(e){
+    document.getElementById('aiInsights').innerHTML=`<p style="color:var(--danger);">Ошибка: ${e.message}</p>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// AI CHAT (GEMINI)
+// ══════════════════════════════════════════════════════════
+function quickChat(msg){
+  document.getElementById('chatInput').value=msg;
+  sendChat();
+}
+
+async function sendChat(){
+  if(!apiKey){showToast('⚠️ Введите API-ключ');return;}
+  const input=document.getElementById('chatInput');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+
+  addChatMsg(msg,'user');
+
+  // Build context string
+  const has=Object.values(scores).some(v=>v>0);
+  const profileCtx=has?`\n\nUser profile scores: ${groups.map(g=>`${g}:${scores[g]||0}`).join(', ')}`:' No profile yet.';
+
+  const systemCtx=`You are Gemini, an expert pharma/biotech career advisor. You help PhD candidates find their way in pharma industry. 
+Answer in Russian (unless user writes in English). Be specific, practical, and encouraging.
+PhD Competence Model domains: ${groups.join(', ')}.${profileCtx}`;
+
+  // Add thinking indicator
+  const thinkId='think-'+Date.now();
+  const msgsEl=document.getElementById('chatMsgs');
+  msgsEl.innerHTML+=`<div class="chat-msg thinking" id="${thinkId}">Gemini думает</div>`;
+  msgsEl.scrollTop=msgsEl.scrollHeight;
+
+  chatHistory.push({role:'user',parts:[{text:msg}]});
+
+  const body={
+    system_instruction:{parts:[{text:systemCtx}]},
+    contents:chatHistory,
+    generationConfig:{temperature:0.75,maxOutputTokens:800}
+  };
+
+  try{
+    const r=await fetch(`${GEMINI_URL}?key=${apiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+    });
+    const data=await r.json();
+    const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'Не удалось получить ответ.';
+
+    chatHistory.push({role:'model',parts:[{text:reply}]});
+    document.getElementById(thinkId)?.remove();
+    addChatMsg(reply,'ai');
+  }catch(e){
+    document.getElementById(thinkId)?.remove();
+    addChatMsg('❌ Ошибка: '+e.message,'ai');
+  }
+}
+
+function addChatMsg(text,role){
+  const msgsEl=document.getElementById('chatMsgs');
+  const div=document.createElement('div');
+  div.className=`chat-msg ${role}`;
+  div.textContent=text;
+  msgsEl.appendChild(div);
+  msgsEl.scrollTop=msgsEl.scrollHeight;
+}
+
+// ══════════════════════════════════════════════════════════
+// QUIZ ENGINE
+// ══════════════════════════════════════════════════════════
+function startQuiz(){
+  curQ=0;qAns={};
+  document.getElementById('quizHero').style.display='none';
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('quizDone').style.display='none';
+  renderQ();
+}
+function renderQ(){
+  const q=quiz[curQ],total=quiz.length;
+  document.getElementById('qProg').textContent=`Вопрос ${curQ+1} / ${total}`;
+  document.getElementById('qDom').textContent=q.d;
+  document.getElementById('pFill').style.width=((curQ/total)*100)+'%';
+  const sel=qAns[curQ];
+  const keys=['A','B','C','D'];
+  let h=`<div class="q-card"><span class="q-badge" style="background:${gColors[q.d]}20;color:${gColors[q.d]};">${q.d}</span>
+    <div class="q-scenario">${q.sc}</div><div class="q-text">${q.t}</div><div class="opts">`;
+  q.o.forEach((o,i)=>{h+=`<button class="opt ${sel===i?'sel':''}" onclick="qSel(${i})"><span class="opt-key">${keys[i]}</span><span>${o.t}</span></button>`;});
+  h+=`</div><div class="q-nav">${curQ>0?'<button class="btn btn-ghost btn-sm" onclick="qPrev()">← Назад</button>':'<span></span>'}
+    <button class="btn btn-accent btn-sm" onclick="qNext()" ${sel===undefined?'style="opacity:0.4;pointer-events:none;"':''}>${curQ<total-1?'Далее →':'Завершить ✓'}</button></div></div>`;
+  document.getElementById('qBox').innerHTML=h;
+}
+function qSel(i){qAns[curQ]=i;renderQ();}
+function qPrev(){if(curQ>0){curQ--;renderQ();}}
+function qNext(){
+  if(qAns[curQ]===undefined)return;
+  if(curQ<quiz.length-1){curQ++;renderQ();}
+  else finishQuiz();
+}
+function finishQuiz(){
+  const ds={},dc={};
+  quiz.forEach((q,i)=>{const a=qAns[i];if(a!==undefined){ds[q.d]=(ds[q.d]||0)+q.o[a].s;dc[q.d]=(dc[q.d]||0)+1;}});
+  scores={};groups.forEach(g=>{scores[g]=dc[g]?Math.round((ds[g]/dc[g])*10)/10:0;});
+  saveState();
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('quizDone').style.display='block';
+  document.getElementById('pFill').style.width='100%';
+}
+
+// ══════════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════════
+function renderRes(){
+  const has=Object.values(scores).some(v=>v>0);
+  document.getElementById('noRes').style.display=has?'none':'block';
+  document.getElementById('resArea').style.display=has?'block':'none';
+  if(!has)return;
+  renderRadar();renderSC();renderDB();renderRecs();renderRoad();renderCover();
+}
+function renderRadar(){
+  const ctx=document.getElementById('radarC').getContext('2d');
+  if(radarInst)radarInst.destroy();
+  radarInst=new Chart(ctx,{type:'radar',data:{
+    labels:groups.map(g=>g.length>18?g.substring(0,16)+'…':g),
+    datasets:[{label:'Профиль',data:groups.map(g=>scores[g]||0),
+      backgroundColor:'rgba(0,232,162,0.12)',borderColor:'#00e8a2',borderWidth:2,
+      pointBackgroundColor:'#00e8a2',pointRadius:5,pointHoverRadius:7}]
+  },options:{responsive:true,scales:{r:{beginAtZero:true,max:10,min:0,
+    ticks:{stepSize:2,color:'#5c6b87',backdropColor:'transparent',font:{size:10}},
+    grid:{color:'rgba(92,107,135,0.15)'},angleLines:{color:'rgba(92,107,135,0.15)'},
+    pointLabels:{color:'#e8ecf4',font:{size:11,weight:'500'}}}},
+    plugins:{legend:{display:false}}}});
+}
+function renderSC(){
+  const el=document.getElementById('scorecard');
+  const avg=groups.reduce((s,g)=>s+(scores[g]||0),0)/groups.length;
+  let h=`<div class="bar-row" style="border-bottom:2px solid var(--border);padding-bottom:14px;margin-bottom:4px;">
+    <div class="bar-label" style="font-weight:700;color:var(--text);">Общий балл</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${avg*10}%;background:linear-gradient(90deg,var(--accent),var(--gemini));"></div></div>
+    <div class="bar-val" style="color:var(--accent);font-size:1em;">${avg.toFixed(1)}</div></div>`;
+  groups.forEach(g=>{const v=scores[g]||0;const c=gColors[g];
+    h+=`<div class="bar-row"><div class="bar-label">${g}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${v*10}%;background:${c};"></div></div>
+    <div class="bar-val" style="color:${c};">${v.toFixed(1)}</div></div>`;
+  });el.innerHTML=h;
+}
+function renderDB(){
+  const el=document.getElementById('detBars');let h='';
+  groups.forEach(g=>{const c=gColors[g];const v=scores[g]||0;
+    h+=`<div style="margin-bottom:22px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="width:10px;height:10px;border-radius:3px;background:${c};"></span>
+      <strong>${g}</strong><span style="margin-left:auto;font-family:var(--mono);color:${c};font-weight:600;">${v.toFixed(1)}/10</span></div>`;
+    compData[g].forEach(comp=>{h+=`<div class="bar-row"><div class="bar-label" style="width:180px;">${comp.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${v*10}%;background:${c};opacity:0.6;"></div></div></div>`;});
+    h+='</div>';});el.innerHTML=h;
+}
+function renderRecs(){
+  const el=document.getElementById('recsBox');
+  const sorted=groups.slice().sort((a,b)=>(scores[a]||0)-(scores[b]||0));
+  const weak=sorted.slice(0,2),strong=sorted.slice(-2).reverse();
+  const tips={"Research skills and knowledge":"Journal clubs, systematic review, курс advanced statistics.","Personal effectiveness":"Time-blocking, дневник рефлексии, менторство.","Professional development":"Хакатон, side-project, бизнес-курс (YC Startup School).","Leadership & Management":"Менторство стажёра, курс Project Management.","Communication":"3 выступления/год, научный блог, public speaking workshop.","Teaching":"Новый учебный модуль, Teaching Certificate, student feedback."};
+  let h=`<h4 style="color:var(--danger);margin-bottom:10px;">⚠️ Зоны роста</h4>`;
+  weak.forEach((g,i)=>{h+=`<div class="rec"><div class="rec-n">${i+1}</div><div class="rec-t"><strong>${g}</strong> — ${(scores[g]||0).toFixed(1)}/10<br>${tips[g]||''}</div></div>`;});
+  h+=`<h4 style="color:var(--accent);margin:18px 0 10px;">✅ Сильные стороны</h4>`;
+  strong.forEach((g,i)=>{h+=`<div class="rec"><div class="rec-n" style="background:linear-gradient(135deg,var(--accent),var(--gemini));">${i+1}</div><div class="rec-t"><strong>${g}</strong> — ${(scores[g]||0).toFixed(1)}/10<br>Используйте как конкурентное преимущество.</div></div>`;});
+  if(apiKey.length>20){h+=`<div style="margin-top:18px;padding:14px;background:var(--gemini-dim);border-radius:var(--radius-sm);border:1px solid rgba(66,133,244,0.2);">
+    <p style="font-size:0.88em;color:var(--text2);margin-bottom:10px;">✨ Получить персональные рекомендации от Gemini AI</p>
+    <button class="btn btn-gemini btn-sm" onclick="rtab('t-ai',document.querySelector('.tab:last-child'));generateInsights()">Генерировать AI-инсайты</button>
+  </div>`;}
+  el.innerHTML=h;
+}
+function renderRoad(){
+  const el=document.getElementById('roadBox');
+  const sorted=groups.slice().sort((a,b)=>(scores[a]||0)-(scores[b]||0));
+  const focus=sorted[0];
+  const weeks=[
+    {w:1,t:"Диагностика",d:`Детальный разбор домена «${focus}». Список 3-5 конкретных действий. Найти accountability-партнёра.`},
+    {w:2,t:"Обучение",d:`Онлайн-курс или workshop по ${focus}. 30 мин/день профильное чтение. Конспектирование ключевых идей.`},
+    {w:3,t:"Практика",d:`Применение навыка на реальной задаче в работе. Обратная связь от коллег. Рефлексия и корректировка.`},
+    {w:4,t:"Интеграция",d:`Фиксация результатов. Обновление CV и LinkedIn. Определение целей на следующий месяц.`}
+  ];
+  let h=`<p style="color:var(--text2);margin-bottom:16px;">Фокус: <strong style="color:${gColors[focus]};">${focus}</strong> (${(scores[focus]||0).toFixed(1)}/10)</p>`;
+  weeks.forEach(w=>{h+=`<div class="rec"><div class="rec-n">${w.w}</div><div class="rec-t"><strong>Неделя ${w.w}: ${w.t}</strong><br>${w.d}</div></div>`;});
+  el.innerHTML=h;
+}
+function renderCover(){
+  const el=document.getElementById('coverBox');
+  if(aiCoverLetter){
+    el.innerHTML=`<div class="cover-letter">${aiCoverLetter}</div>
+      <div style="margin-top:14px;display:flex;gap:8px;">
+        <button class="btn btn-sm btn-outline" onclick="copyText(aiCoverLetter)">📋 Копировать</button>
+        <button class="btn btn-sm btn-ghost" onclick="go('chat')">✏️ Доработать в диалоге</button>
+      </div>`;
+  }else{
+    el.innerHTML=`<p style="color:var(--text3);">Сопроводительное письмо генерируется после AI-анализа CV с Gemini. Перейдите в «Анализ CV» и запустите анализ.</p>`;
+  }
+}
+function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast('📋 Скопировано!')).catch(()=>{});}
+
+// ══════════════════════════════════════════════════════════
+// JOBS
+// ══════════════════════════════════════════════════════════
+let jFilt='all';
+function renderJobs(f){
+  if(f)jFilt=f;
+  const tracks=[{k:'all',l:'Все'},{k:'clinical',l:'🏥 Clinical'},{k:'regulatory',l:'📋 Regulatory'},{k:'commercial',l:'💼 Commercial'},{k:'academic',l:'🎓 Academic'},{k:'management',l:'⚙️ Management'},{k:'rd',l:'🔬 R&D'}];
+  document.getElementById('jFilters').innerHTML=tracks.map(t=>`<button class="fbtn ${jFilt===t.k?'on':''}" onclick="renderJobs('${t.k}')">${t.l}</button>`).join('');
+  const trackCls={clinical:'t-clin',regulatory:'t-reg',commercial:'t-comm',academic:'t-acad',management:'t-mgmt',rd:'t-rd'};
+  const list=jFilt==='all'?jobsDB:jobsDB.filter(j=>j.track===jFilt);
+  const has=Object.values(scores).some(v=>v>0);
+  const sorted=has?list.slice().sort((a,b)=>calcMatch(b)-calcMatch(a)):list;
+  document.getElementById('jGrid').innerHTML=sorted.map(j=>{
+    const m=calcMatch(j);
+    const mc=m>=75?'m-hi':m>=50?'m-md':'m-lo';
+    return `<a class="jcard" href="${j.url}" target="_blank" rel="noopener">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span class="jtrack ${trackCls[j.track]||''}">${j.track.toUpperCase()}</span>
+        ${has?`<span class="jmatch ${mc}">${m}% match</span>`:''}
       </div>
-      <div class="prog-footer">
-        <div style="display:flex;gap:6px;align-items:center">
-          <span class="prog-status ${p.status}">${p.status}</span>
-          <span class="prog-intl ${intlClass}">${intlLabel}</span>
-        </div>
-        ${p.link ? `<a class="prog-link" href="${p.link}" target="_blank">Visit →</a>` : ''}
-      </div>
-    </div>`;
+      <div class="jname">${j.title}</div>
+      <div class="jcomp">${j.company} · <span style="color:var(--blue);font-size:0.8em;">hh.ru →</span></div>
+      <div class="jtags">${j.tags.map(t=>`<span class="jtag">${t}</span>`).join('')}</div>
+    </a>`;
   }).join('');
 }
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  document.getElementById('toastMsg').textContent=msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
+function calcMatch(j){
+  if(!Object.values(scores).some(v=>v>0))return 0;
+  let total=0,cnt=0;
+  for(const[d,r]of Object.entries(j.req)){total+=Math.min(100,((scores[d]||0)/r)*100);cnt++;}
+  return cnt?Math.round(total/cnt):0;
 }
+
+// ══════════════════════════════════════════════════════════
+// PROGRAMS
+// ══════════════════════════════════════════════════════════
+let pFilt='all';
+function renderProgs(f){
+  if(f)pFilt=f;
+  const fl=[{k:'all',l:'Все'},{k:'ru',l:'🇷🇺 Россия'},{k:'eu',l:'🇪🇺 Европа'},{k:'us',l:'🇺🇸 USA'},{k:'internship',l:'Стажировка'},{k:'summer',l:'Летняя школа'}];
+  document.getElementById('pFilters').innerHTML=fl.map(f=>`<button class="fbtn ${pFilt===f.k?'on':''}" onclick="renderProgs('${f.k}')">${f.l}</button>`).join('');
+  const rm={ru:'🇷🇺',eu:'🇪🇺',us:'🇺🇸'};
+  const list=pFilt==='all'?progsDB:progsDB.filter(p=>p.region===pFilt||p.type===pFilt);
+  document.getElementById('pGrid').innerHTML=list.map(p=>`<a class="jcard" href="${p.url}" target="_blank" rel="noopener">
+    <span class="jtrack t-clin">${rm[p.region]||''} ${p.type.toUpperCase()}</span>
+    <div class="jname">${p.title}</div>
+    <div class="jcomp">${p.org} · <span style="color:var(--blue);font-size:0.8em;">перейти →</span></div>
+    <div class="jtags">${p.tags.map(t=>`<span class="jtag">${t}</span>`).join('')}</div>
+  </a>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// MANUAL
+// ══════════════════════════════════════════════════════════
+function renderManual(){
+  const el=document.getElementById('manForm');let h='';
+  groups.forEach(g=>{const c=gColors[g];
+    h+=`<div class="m-group"><div class="m-group-title" style="background:${c}15;color:${c};border-left:4px solid ${c};">${g}</div>`;
+    compData[g].forEach(comp=>{
+      h+=`<div class="m-row"><div style="flex:1;"><div class="m-label" style="font-weight:500;">${comp.name}</div>
+        <div class="m-desc">${comp.items[0]}</div></div>
+        <select class="ms" data-d="${g}"><option value="">—</option>
+        ${[1,2,3,4,5,6,7,8,9,10].map(i=>`<option value="${i}" ${Math.round(scores[g]||0)===i?'selected':''}>${i}</option>`).join('')}
+        </select></div>`;
+    });h+='</div>';});el.innerHTML=h;
+}
+function saveManual(){
+  const sels=document.querySelectorAll('.ms');
+  const ds={},dc={};
+  sels.forEach(s=>{const d=s.dataset.d;const v=parseInt(s.value);if(!isNaN(v)){ds[d]=(ds[d]||0)+v;dc[d]=(dc[d]||0)+1;}});
+  groups.forEach(g=>{if(dc[g])scores[g]=Math.round((ds[g]/dc[g])*10)/10;});
+  saveState();go('results');
+}
+
+// ══════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({scores,date:new Date().toISOString(),source:'Pathfinder AI (Gemini)'},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`pathfinder_${new Date().toISOString().slice(0,10)}.json`;a.click();
+}
+function resetAll(){
+  if(confirm('Сбросить все результаты?')){
+    scores={};aiCoverLetter='';lastAiResult=null;chatHistory=[];
+    try{localStorage.removeItem('pf_scores_g');}catch(e){}
+    renderRes();
+  }
+}
+function showToast(msg){
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+(function(){
+  const sel=document.getElementById('targetJob');
+  jobsDB.forEach(j=>{
+    const o=document.createElement('option');
+    o.value=j.title+' @ '+j.company;
+    o.textContent=j.title+' — '+j.company;
+    sel.appendChild(o);
+  });
+  renderJobs();renderProgs();
+})();
 </script>
 </body>
 </html>
